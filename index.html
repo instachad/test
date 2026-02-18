@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 1</h1> 
+  <h1>EVE Tracker</h1> 
 
   <!-- Страница авторизации -->
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;" id="login-container">
@@ -36,7 +36,15 @@ const scopes = [
   "esi-characters.read_standings.v1"
 ].join(" ");
 
-document.getElementById('v').textContent = new Date().toISOString();
+fetch("https://api.github.com/repos/instachad/test/commits?per_page=1")
+  .then(r => r.json())
+  .then(data => {
+    const sha = data[0].sha.substring(0, 7);
+    document.getElementById('v').textContent = "build " + sha;
+  })
+  .catch(() => {
+    document.getElementById('v').textContent = "dev";
+  });
 
 const statusEl = document.getElementById('status');
 const loginBtn = document.getElementById('loginBtn');
