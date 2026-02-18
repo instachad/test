@@ -4,6 +4,59 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>EVE Tracker</title>
+  <style>
+  body {
+    margin: 0;
+    padding: 24px;
+    background: #0f1115;
+    color: #d6d9df;
+    font-family: "Segoe UI", Roboto, sans-serif;
+  }
+
+  h1 {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #e4e8f0;
+  }
+
+  #login-container,
+  #app > div {
+    background: #171a21;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+  }
+
+  button {
+    background: #222733;
+    color: #d6d9df;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    transition: background 0.15s ease, border 0.15s ease;
+  }
+
+  button:hover {
+    background: #2a3142;
+    border-color: rgba(255,255,255,0.15);
+  }
+
+  select {
+    background: #1e2330;
+    color: #d6d9df;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+  }
+
+  select:focus,
+  button:focus {
+    outline: none;
+    border-color: #4a6fa5;
+  }
+
+  #barsContainer {
+    margin-top: 16px;
+  }
+</style>
+
 </head>
 <body>
   <h1>EVE Tracker</h1> 
