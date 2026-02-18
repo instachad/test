@@ -120,12 +120,14 @@
 
       if (!code) {
         statusEl.textContent = localStorage.getItem("access_token") ? "залогинен" : "не залогинен";
+        console.log("Токен не найден");
         return;
       }
 
       const expectedState = sessionStorage.getItem("eve_state");
       if (!expectedState || returnedState !== expectedState) {
         statusEl.textContent = "ошибка безопасности (state mismatch)";
+        console.log("Ошибка безопасности (state mismatch)");
         return;
       }
 
@@ -135,6 +137,8 @@
         const token = await exchangeCodeForTokenPKCE(code);
         localStorage.setItem("access_token", token.access_token);
         localStorage.setItem("refresh_token", token.refresh_token);
+
+        console.log("Токен сохранен:", token.access_token);
 
         statusEl.textContent = "залогинен";
 
