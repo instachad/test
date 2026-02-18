@@ -22,11 +22,7 @@
   <p style="margin-top:14px;">
     Версия: <span id="v"></span>
   </p>
-
-    <!-- Кнопка выхода -->
-    <button id="logoutBtn" style="margin-top: 20px;">Выход</button>
-  </div>
-
+ 
 <script>
 const clientId = "4c2f7825780f4d0cba80a75d1a8a0c69";
 const redirectUri = "https://instachad.github.io/test/";
@@ -377,67 +373,6 @@ function createBar(label, standing, kind) {
   wrapper.appendChild(title);
   wrapper.appendChild(bar);
   return wrapper;
-}
-
-// ---------- FETCH STANDINGS ----------
-async function fetchStandings() {
-  const token = localStorage.getItem("access_token");
-  const charId = localStorage.getItem("character_id");
-
-  const out = document.getElementById("standingsOut");
-  if (!out) return;
-
-  if (!token || !charId) {
-    out.textContent = "Нет token или character_id (сначала залогинься и дождись verify).";
-    return;
-  }
-
-  out.textContent = "Гружу standings...";
-
-  const url = `https://esi.evetech.net/latest/characters/${encodeURIComponent(charId)}/standings/`;
-
-  try {
-    const resp = await fetch(url, {
-      headers: { "Authorization": "Bearer " + token }
-    });
-
-    const text = await resp.text(); // сначала текст, чтобы видеть ошибку как есть
-    if (!resp.ok) {
-      out.textContent = `Ошибка ESI ${resp.status}\n\n${text}`;
-      return;
-    }
-
-    const data = JSON.parse(text);
-
-// Берем только фракции и корпы
-const filtered = data.filter(x =>
-  x.from_type === "faction" || x.from_type === "npc_corp"
-);
-
-// Собираем список уникальных ID
-const ids = Array.from(new Set(filtered.map(x => x.from_id)));
-
-const namesResp = await fetch("https://esi.evetech.net/latest/universe/names/", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(ids)
-});
-
-const names = await namesResp.json();
-const idToName = new Map(names.map(x => [x.id, x.name]));
-
-const pretty = filtered.map(x => ({
-  type: x.from_type,
-  name: idToName.get(x.from_id) || String(x.from_id),
-  standing: x.standing
-}))
-.sort((a, b) => a.type.localeCompare(b.type) || b.standing - a.standing);
-
-out.textContent = JSON.stringify(pretty, null, 2);
-  } catch (e) {
-    console.error(e);
-    out.textContent = "Ошибка запроса (см. консоль).";
-  }
 }
 
 // ---------- LOGOUT ----------
