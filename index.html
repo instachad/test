@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 2</h1>
+  <h1>EVE Tracker 3</h1>
 
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
     <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
@@ -34,11 +34,12 @@ const urlParams = new URLSearchParams(window.location.search);
 const code = urlParams.get("code");
 
 // Функция для обмена кода на токен
-async function exchangeCodeForToken(code) {
+async function exchangeCodeForToken(code, state) {
   const body = new URLSearchParams();
   body.append("grant_type", "authorization_code");
   body.append("code", code);
   body.append("redirect_uri", redirectUri);
+  body.append("state", state);  // Добавляем state в тело запроса
 
   const authorizationHeader = "Basic " + btoa(clientId + ":");
 
@@ -56,9 +57,9 @@ async function exchangeCodeForToken(code) {
 
     const data = await response.json();  // Ответ от сервера
 
-    console.log('Response Status:', response.status);  // Логируем статус
-    console.log('Response Headers:', response.headers);  // Логируем заголовки
+    console.log('Response Status:', response.status);  // Логируем статус ответа
     console.log('Response Data:', data);  // Логируем данные ответа
+    console.log("state: ", state);  // Логируем state
 
     if (!response.ok) {
       console.error('Error fetching token:', data);  // Логируем ошибку
@@ -103,7 +104,8 @@ document.getElementById('loginBtn').addEventListener('click', () => {
     "response_type=code" +
     "&redirect_uri=" + encodeURIComponent(redirectUri) +
     "&client_id=" + clientId +
-    "&state=" + state;  // URL для авторизации
+    "&scope=" + encodeURIComponent(scopes) +
+    "&state=" + state;  // Добавляем state в запрос
 
   window.location.href = authUrl;  // Перенаправляем на страницу логина EVE
 });
