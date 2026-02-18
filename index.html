@@ -213,13 +213,54 @@ async function verifyToken() {
   document.getElementById("charId").textContent = data.CharacterID || "???";
 
   localStorage.setItem("character_id", String(data.CharacterID || ""));
+  fetchStandings();
 }
+// ---------- FETCH STANDINGS ----------
+async function fetchStandings() {
+  const token = localStorage.getItem("access_token");
+  const charId = localStorage.getItem("character_id");
+
+  const out = document.getElementById("standingsOut");
+  if (!out) return;
+
+  if (!token || !charId) {
+    out.textContent = "Нет token или character_id (сначала залогинься и дождись verify).";
+    return;
+  }
+
+  out.textContent = "Гружу standings...";
+
+  const url = `https://esi.evetech.net/latest/characters/${encodeURIComponent(charId)}/standings/`;
+
+  try {
+    const resp = await fetch(url, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+
+    const text = await resp.text(); // сначала текст, чтобы видеть ошибку как есть
+    if (!resp.ok) {
+      out.textContent = `Ошибка ESI ${resp.status}\n\n${text}`;
+      return;
+    }
+
+    const data = JSON.parse(text);
+    // красиво печатаем, но не бесконечно
+    out.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    console.error(e);
+    out.textContent = "Ошибка запроса (см. консоль).";
+  }
+}
+
 // ---------- LOGOUT ----------
 document.addEventListener("click", e => {
   if (e.target && e.target.id === "logoutBtn") {
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
     setUiLoggedIn(false);
+  }
+  if (e.target && e.target.id === "refreshStandingsBtn") {
+    fetchStandings();
   }
 });
 </script>
