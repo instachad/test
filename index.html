@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 3</h1>
+  <h1>EVE Tracker 4</h1>
 
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
     <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
@@ -24,7 +24,7 @@
 
 <script>
   const clientId = "4c2f7825780f4d0cba80a75d1a8a0c69";
-  const redirectUri = window.location.origin + window.location.pathname;
+  const redirectUri = "https://instachad.github.io/test/";
   const scopes = "esi-wallet.read_character_wallet.v1 esi-characters.read_standings.v1";
 
   document.getElementById('v').textContent = new Date().toISOString();
@@ -45,7 +45,7 @@ async function exchangeCodeForToken(code) {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": "Basic " + btoa(clientId + ":")
+        "Authorization": "Basic " + btoa(clientId + ":") // это правильно, для Client ID
       },
       body: body.toString()
     });
