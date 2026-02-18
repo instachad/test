@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 2</h1> 
+  <h1>EVE Tracker 1</h1> 
 
   <!-- Страница авторизации -->
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;" id="login-container">
@@ -22,29 +22,6 @@
   <p style="margin-top:14px;">
     Версия: <span id="v"></span>
   </p>
-
-  <!-- Раздел для работы с функционалом после логина -->
-  <div id="dashboard" style="display:none;">
-    <h2>Репутация и Миссии</h2>
-
-    <!-- Стендинги -->
-    <div>
-      <label for="corp">Выберите корпорацию:</label>
-      <select id="corp">
-        <option value="Caldari Navy">Caldari Navy</option>
-        <option value="Serpentis">Serpentis</option>
-        <option value="Kaalakiota Corporation">Kaalakiota Corporation</option>
-        <option value="Federation Navy">Federation Navy</option>
-      </select>
-    </div>
-
-    <div class="reputation-container" id="reputation-container">
-      <div class="state-bar" id="state-bar">
-        <div class="corp-bar" id="corp-bar"></div>
-      </div>
-    </div>
-
-    <div id="missions-info"></div>
 
     <!-- Кнопка выхода -->
     <button id="logoutBtn" style="margin-top: 20px;">Выход</button>
@@ -63,6 +40,7 @@ document.getElementById('v').textContent = new Date().toISOString();
 
 const statusEl = document.getElementById('status');
 const loginBtn = document.getElementById('loginBtn');
+const loginContainer = document.getElementById('login-container');
 
 // ---------- UI блок ----------
 let appEl = document.getElementById('app');
@@ -72,16 +50,22 @@ if (!appEl) {
   appEl.style.marginTop = "20px";
   appEl.style.display = "none";
   appEl.innerHTML = `
-    <div style="padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
-      <div style="display:flex; justify-content:space-between;">
-        <div><b>Рабочая зона</b></div>
-        <button id="logoutBtn">Выход</button>
-      </div>
-      <div style="margin-top:10px; opacity:.7;">
-        Тут будет функционал стендингов и миссий.
-      </div>
+  <div style="padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
+    <div style="display:flex; justify-content:space-between;">
+      <div><b>Рабочая зона</b></div>
+      <button id="logoutBtn">Выход</button>
     </div>
-  `;
+
+    <div style="margin-top:10px;">
+      <div><b>Персонаж:</b> <span id="charName">—</span></div>
+      <div style="opacity:.6;">Character ID: <span id="charId">—</span></div>
+    </div>
+
+    <div style="margin-top:10px; opacity:.7;">
+      Дальше сюда прикрутим стендинги.
+    </div>
+  </div>
+`;
   document.body.appendChild(appEl);
 }
 
@@ -89,11 +73,11 @@ const logoutBtn = () => document.getElementById("logoutBtn");
 
 function setUiLoggedIn(state) {
   if (state) {
-    loginBtn.parentElement.style.display = "none";
+    loginContainer.style.display = "none";
     appEl.style.display = "block";
     statusEl.textContent = "залогинен";
   } else {
-    loginBtn.parentElement.style.display = "flex";
+    loginContainer.style.display = "flex";
     appEl.style.display = "none";
     statusEl.textContent = "не залогинен";
   }
@@ -171,9 +155,11 @@ async function exchange(code) {
   const returnedState = params.get("state");
 
   if (!code) {
-    setUiLoggedIn(!!localStorage.getItem("access_token"));
-    return;
-  }
+  const hasToken = !!localStorage.getItem("access_token");
+  setUiLoggedIn(hasToken);
+  if (hasToken) verifyToken();
+  return;
+}
 
   const expectedState = sessionStorage.getItem("eve_state");
   if (returnedState !== expectedState) {
@@ -190,12 +176,34 @@ async function exchange(code) {
 
     history.replaceState({}, document.title, redirectUri);
     setUiLoggedIn(true);
+    verifyToken();
   } catch (e) {
     console.error(e);
     statusEl.textContent = "ошибка токена";
   }
 })();
 
+// ---------- VERIFY TOKEN ----------
+async function verifyToken() {
+  const token = localStorage.getItem("access_token");
+  if (!token) return;
+
+  const resp = await fetch("https://login.eveonline.com/oauth/verify", {
+    headers: { "Authorization": "Bearer " + token }
+  });
+
+  if (!resp.ok) {
+    console.log("verify failed", resp.status);
+    return;
+  }
+
+  const data = await resp.json();
+
+  document.getElementById("charName").textContent = data.CharacterName || "???";
+  document.getElementById("charId").textContent = data.CharacterID || "???";
+
+  localStorage.setItem("character_id", String(data.CharacterID || ""));
+}
 // ---------- LOGOUT ----------
 document.addEventListener("click", e => {
   if (e.target && e.target.id === "logoutBtn") {
