@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 1</h1>
+  <h1>EVE Tracker 2</h1>
 
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
     <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
@@ -56,7 +56,8 @@ async function exchangeCodeForToken(code) {
 
     const data = await response.json();  // Ответ от сервера
 
-    console.log('Response Status:', response.status);  // Логируем статус ответа
+    console.log('Response Status:', response.status);  // Логируем статус
+    console.log('Response Headers:', response.headers);  // Логируем заголовки
     console.log('Response Data:', data);  // Логируем данные ответа
 
     if (!response.ok) {
