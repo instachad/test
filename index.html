@@ -8,14 +8,28 @@
 <body>
   <h1>EVE Tracker</h1>
 
-  <p>
-    Страница работает. Версия:
-    <span id="v"></span>
+  <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
+    <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
+      Login with EVE
+    </button>
+    <div>
+      <div style="font-weight:600;">Статус:</div>
+      <div id="status">не залогинен</div>
+    </div>
+  </div>
+
+  <p style="margin-top:14px;">
+    Версия: <span id="v"></span>
   </p>
 
   <script>
-    document.getElementById('v').textContent =
-      new Date().toISOString();
+    // версия (чтобы видеть, что обновилось)
+    document.getElementById('v').textContent = new Date().toISOString();
+
+    // пока заглушка: по клику просто меняем статус
+    document.getElementById('loginBtn').addEventListener('click', () => {
+      document.getElementById('status').textContent = 'нажато (логин подключим дальше)';
+    });
   </script>
 </body>
 </html>
