@@ -23,13 +23,24 @@
   </p>
 
   <script>
-    // версия (чтобы видеть, что обновилось)
-    document.getElementById('v').textContent = new Date().toISOString();
+  const clientId = "4c2f7825780f4d0cba80a75d1a8a0c69";
+  const redirectUri = window.location.origin + window.location.pathname;
+  const scopes = "esi-wallet.read_character_wallet.v1 esi-characters.read_standings.v1";
 
-    // пока заглушка: по клику просто меняем статус
-    document.getElementById('loginBtn').addEventListener('click', () => {
-      document.getElementById('status').textContent = 'нажато (логин подключим дальше)';
-    });
-  </script>
+  document.getElementById('v').textContent = new Date().toISOString();
+
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    const state = Math.random().toString(36).substring(2);
+    const authUrl =
+      "https://login.eveonline.com/v2/oauth/authorize/?" +
+      "response_type=code" +
+      "&redirect_uri=" + encodeURIComponent(redirectUri) +
+      "&client_id=" + clientId +
+      "&scope=" + encodeURIComponent(scopes) +
+      "&state=" + state;
+
+    window.location.href = authUrl;
+  });
+</script>
 </body>
 </html>
