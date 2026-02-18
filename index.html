@@ -362,6 +362,7 @@ function createBar(label, standing, kind) {
   title.textContent = `${label} (${standing.toFixed(2)})`;
   title.style.marginBottom = "6px";
   title.style.fontWeight = "600";
+  title.style.opacity = "0.95";
 
   const bar = document.createElement("div");
   bar.style.position = "relative";
@@ -371,6 +372,20 @@ function createBar(label, standing, kind) {
   bar.style.background = "#262626";
   bar.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,0.06)";
 
+  // Цвета по твоей логике
+  let posColor = "#8a8a8a";
+  let negColor = "#8a8a8a";
+  let zeroColor = "#8a8a8a";
+
+  if (kind === "faction") {
+    posColor = "#5b7ea6";   // мягкий голубой
+    negColor = "#a66a75";   // мягкий розово-красный
+  } else if (kind === "corp") {
+    posColor = "#6e9c78";   // мягкий зелёный
+    negColor = "#b37a4a";   // мягкий оранжевый
+  }
+
+  // Центр (0)
   const center = document.createElement("div");
   center.style.position = "absolute";
   center.style.left = "50%";
@@ -380,18 +395,58 @@ function createBar(label, standing, kind) {
   center.style.background = "rgba(255,255,255,0.22)";
   bar.appendChild(center);
 
+  // Тики -10 -5 0 +5 +10 (тонкие линии)
+  const ticks = [-10, -5, 0, 5, 10];
+  for (const t of ticks) {
+    const x = ((t + 10) / 20) * 100;
+    const tick = document.createElement("div");
+    tick.style.position = "absolute";
+    tick.style.left = `${x}%`;
+    tick.style.top = "0";
+    tick.style.height = "100%";
+    tick.style.width = "1px";
+    tick.style.background = t === 0 ? "rgba(255,255,255,0.22)" : "rgba(255,255,255,0.07)";
+    bar.appendChild(tick);
+  }
+
+  // Позиция значения (-10..+10 => 0..100)
   const clamped = Math.max(-10, Math.min(10, standing));
   const percent = ((clamped + 10) / 20) * 100;
 
+  // Заливка от центра до значения
+  const fill = document.createElement("div");
+  fill.style.position = "absolute";
+  fill.style.top = "0";
+  fill.style.height = "100%";
+  fill.style.opacity = "0.85";
+  fill.style.transition = "left 180ms ease, width 180ms ease";
+
+  if (clamped === 0) {
+    fill.style.left = "50%";
+    fill.style.width = "0%";
+    fill.style.background = zeroColor;
+  } else if (clamped > 0) {
+    fill.style.left = "50%";
+    fill.style.width = `${percent - 50}%`;
+    fill.style.background = `linear-gradient(90deg, rgba(255,255,255,0.10), ${posColor})`;
+  } else {
+    fill.style.left = `${percent}%`;
+    fill.style.width = `${50 - percent}%`;
+    fill.style.background = `linear-gradient(90deg, ${negColor}, rgba(255,255,255,0.10))`;
+  }
+  bar.appendChild(fill);
+
+  // Маркер текущего значения
   const marker = document.createElement("div");
   marker.style.position = "absolute";
   marker.style.top = "0";
   marker.style.height = "100%";
   marker.style.width = "2px";
   marker.style.left = `${percent}%`;
-
-  // простые цвета пока
-  marker.style.background = clamped > 0 ? "#6e9c78" : clamped < 0 ? "#b37a4a" : "#888";
+  marker.style.background = clamped > 0 ? posColor : clamped < 0 ? negColor : zeroColor;
+  marker.style.boxShadow = "0 0 0 1px rgba(0,0,0,0.35)";
+  marker.style.opacity = "0.95";
+  marker.style.transition = "left 180ms ease";
   bar.appendChild(marker);
 
   wrapper.appendChild(title);
