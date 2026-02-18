@@ -6,9 +6,10 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 5</h1>
+  <h1>EVE Tracker</h1> 
 
-  <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
+  <!-- Страница авторизации -->
+  <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;" id="login-container">
     <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
       Login with EVE
     </button>
@@ -22,112 +23,176 @@
     Версия: <span id="v"></span>
   </p>
 
-<script>
-const clientId = "4c2f7825780f4d0cba80a75d1a8a0c69";
-const redirectUri = "https://instachad.github.io/test/";
+  <!-- Раздел для работы с функционалом после логина -->
+  <div id="dashboard" style="display:none;">
+    <h2>Репутация и Миссии</h2>
 
-// выбери нужные ESI scopes
-const scopes = [
-  "esi-wallet.read_character_wallet.v1",
-  "esi-characters.read_standings.v1",
-].join(" ");
+    <!-- Стендинги -->
+    <div>
+      <label for="corp">Выберите корпорацию:</label>
+      <select id="corp">
+        <option value="Caldari Navy">Caldari Navy</option>
+        <option value="Serpentis">Serpentis</option>
+        <option value="Kaalakiota Corporation">Kaalakiota Corporation</option>
+        <option value="Federation Navy">Federation Navy</option>
+      </select>
+    </div>
 
-document.getElementById('v').textContent = new Date().toISOString();
-const statusEl = document.getElementById('status');
+    <div class="reputation-container" id="reputation-container">
+      <div class="state-bar" id="state-bar">
+        <div class="corp-bar" id="corp-bar"></div>
+      </div>
+    </div>
 
-function base64UrlEncode(bytes) {
-  let str = btoa(String.fromCharCode(...bytes));
-  return str.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
+    <div id="missions-info"></div>
+    
+  </div>
 
-async function sha256ToBase64Url(input) {
-  const data = new TextEncoder().encode(input);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return base64UrlEncode(new Uint8Array(hash));
-}
+  <script>
+    const clientId = "4c2f7825780f4d0cba80a75d1a8a0c69";
+    const redirectUri = "https://instachad.github.io/test/";
 
-function randomString(len = 64) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
-  const arr = new Uint8Array(len);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, x => chars[x % chars.length]).join("");
-}
+    const scopes = [
+      "esi-wallet.read_character_wallet.v1",
+      "esi-characters.read_standings.v1"
+    ].join(" ");
 
-async function startLogin() {
-  const state = randomString(24);
-  const codeVerifier = randomString(64);
-  const codeChallenge = await sha256ToBase64Url(codeVerifier);
+    document.getElementById('v').textContent = new Date().toISOString();
+    const statusEl = document.getElementById('status');
+    const loginContainer = document.getElementById('login-container');
+    const dashboard = document.getElementById('dashboard');
+    
+    // Функция для генерации случайной строки (для безопасности)
+    function randomString(len = 64) {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+      const arr = new Uint8Array(len);
+      crypto.getRandomValues(arr);
+      return Array.from(arr, x => chars[x % chars.length]).join("");
+    }
 
-  sessionStorage.setItem("eve_state", state);
-  sessionStorage.setItem("eve_code_verifier", codeVerifier);
+    // Функция для начала логина
+    async function startLogin() {
+      const state = randomString(24);
+      const codeVerifier = randomString(64);
+      const codeChallenge = await sha256ToBase64Url(codeVerifier);
 
-  const authUrl =
-  "https://login.eveonline.com/v2/oauth/authorize/?" +
-  "response_type=code" +
-  "&redirect_uri=" + encodeURIComponent(redirectUri) +
-  "&client_id=" + encodeURIComponent(clientId) +
-  "&scope=" + encodeURIComponent(scopes) +
-  "&state=" + encodeURIComponent(state);
+      sessionStorage.setItem("eve_state", state);
+      sessionStorage.setItem("eve_code_verifier", codeVerifier);
 
-  window.location.href = authUrl;
-}
+      const authUrl =
+        "https://login.eveonline.com/v2/oauth/authorize/?" +
+        "response_type=code" +
+        "&redirect_uri=" + encodeURIComponent(redirectUri) +
+        "&client_id=" + encodeURIComponent(clientId) +
+        "&scope=" + encodeURIComponent(scopes) +
+        "&state=" + encodeURIComponent(state);
 
-async function exchangeCodeForTokenPKCE(code) {
-  const codeVerifier = sessionStorage.getItem("eve_code_verifier");
-  if (!codeVerifier) throw new Error("Missing code_verifier (sessionStorage cleared?)");
+      window.location.href = authUrl;
+    }
 
-  const body = new URLSearchParams();
-  body.append("grant_type", "authorization_code");
-  body.append("code", code);
-  body.append("client_id", clientId);
-  body.append("code_verifier", codeVerifier);
+    // Функция для обмена кода на токен
+    async function exchangeCodeForTokenPKCE(code) {
+      const codeVerifier = sessionStorage.getItem("eve_code_verifier");
+      if (!codeVerifier) throw new Error("Missing code_verifier (sessionStorage cleared?)");
 
-  const resp = await fetch("https://login.eveonline.com/v2/oauth/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString()
-  });
+      const body = new URLSearchParams();
+      body.append("grant_type", "authorization_code");
+      body.append("code", code);
+      body.append("client_id", clientId);
+      body.append("code_verifier", codeVerifier);
 
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(JSON.stringify(data));
-  return data;
-}
+      const resp = await fetch("https://login.eveonline.com/v2/oauth/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: body.toString()
+      });
 
-// обработка колбэка
-(async function handleCallback() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const code = urlParams.get("code");
-  const returnedState = urlParams.get("state");
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(JSON.stringify(data));
+      return data;
+    }
 
-  if (!code) {
-    statusEl.textContent = localStorage.getItem("access_token") ? "залогинен" : "не залогинен";
-    return;
-  }
+    // Обработка колбэка
+    (async function handleCallback() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get("code");
+      const returnedState = urlParams.get("state");
 
-  const expectedState = sessionStorage.getItem("eve_state");
-  if (!expectedState || returnedState !== expectedState) {
-    statusEl.textContent = "ошибка безопасности (state mismatch)";
-    return;
-  }
+      if (!code) {
+        statusEl.textContent = localStorage.getItem("access_token") ? "залогинен" : "не залогинен";
+        return;
+      }
 
-  statusEl.textContent = "получаю токен...";
+      const expectedState = sessionStorage.getItem("eve_state");
+      if (!expectedState || returnedState !== expectedState) {
+        statusEl.textContent = "ошибка безопасности (state mismatch)";
+        return;
+      }
 
-  try {
-    const token = await exchangeCodeForTokenPKCE(code);
-    localStorage.setItem("access_token", token.access_token);
-    localStorage.setItem("refresh_token", token.refresh_token);
+      statusEl.textContent = "получаю токен...";
 
-    statusEl.textContent = "залогинен";
+      try {
+        const token = await exchangeCodeForTokenPKCE(code);
+        localStorage.setItem("access_token", token.access_token);
+        localStorage.setItem("refresh_token", token.refresh_token);
 
-    // подчистим URL, чтобы code не висел в адресной строке
-    history.replaceState({}, document.title, redirectUri);
-  } catch (e) {
-    console.error(e);
-    statusEl.textContent = "ошибка получения токена (см. консоль)";
-  }
-})();
+        statusEl.textContent = "залогинен";
 
-document.getElementById('loginBtn').addEventListener('click', startLogin);
-</script>
+        // скрываем раздел авторизации, показываем основной интерфейс
+        loginContainer.style.display = 'none';
+        dashboard.style.display = 'block';
+
+        // Получаем данные
+        fetchCharacterData();
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = "ошибка получения токена (см. консоль)";
+      }
+    })();
+
+    // Функция для получения данных о стендингах
+    async function fetchCharacterData() {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        window.location.href = "index.html";  // Если нет токена, перенаправляем на страницу авторизации
+        return;
+      }
+
+      try {
+        const response = await fetch("https://esi.evetech.net/latest/characters/{character_id}/standings/", {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+        console.log('Репутация:', data);
+        updateReputation(data);
+      } catch (error) {
+        console.error("Ошибка запроса", error);
+      }
+    }
+
+    // Обновление данных по репутации
+    function updateReputation(data) {
+      const selectedCorp = document.getElementById("corp").value;
+      const corpInfo = data.find(item => item.corp_name === selectedCorp);
+      if (!corpInfo) return;
+
+      const stateRep = corpInfo.stateRep;
+      const corpRep = corpInfo.corpRep;
+
+      // Обновляем полосы репутации
+      const statePercentage = (stateRep / 10) * 100;
+      const corpPercentage = (corpRep / 10) * 100;
+
+      document.getElementById('state-bar').style.width = `${statePercentage}%`;
+      document.getElementById('corp-bar').style.width = `${corpPercentage}%`;
+
+      document.getElementById("missions-info").textContent = `Миссии для ${selectedCorp} — текущее количество выполненных миссий: ...`;
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', startLogin);
+  </script>
 </body>
 </html>
