@@ -37,39 +37,41 @@
 
   // Функция для обмена кода на токен
   async function exchangeCodeForToken(code) {
-    const body = new URLSearchParams();
-    body.append("grant_type", "authorization_code");
-    body.append("code", code);
-    body.append("redirect_uri", redirectUri);
+  const body = new URLSearchParams();
+  body.append("grant_type", "authorization_code");
+  body.append("code", code);
+  body.append("redirect_uri", redirectUri);
 
-    try {
-      const response = await fetch("https://login.eveonline.com/v2/oauth/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "Authorization": "Basic " + btoa(clientId + ":")  // Авторизация через Client ID
-        },
-        body: body.toString()
-      });
+  const authorizationHeader = "Basic " + btoa(clientId + ":");
 
-      const data = await response.json();  // Ответ от сервера
+  console.log('Authorization Header:', authorizationHeader);  // Логируем заголовок
 
-      console.log('Response Status:', response.status);  // Логируем статус ответа
-      console.log('Response Data:', data);  // Логируем данные ответа
+  try {
+    const response = await fetch("https://login.eveonline.com/v2/oauth/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Authorization": authorizationHeader
+      },
+      body: body.toString()
+    });
 
-      if (!response.ok) {
-        console.error('Error fetching token:', data);  // Логируем ошибку, если она есть
-        statusEl.textContent = "ошибка получения токена";  // Обновляем статус
-        return null;
-      }
+    const data = await response.json();
 
-      return data;  // Возвращаем данные с токеном
-    } catch (err) {
-      console.error('Request error:', err);  // Логируем ошибку запроса
-      statusEl.textContent = "ошибка запроса";  // Обновляем статус
-      return null;
+    console.log('Response Status:', response.status);  // Логируем статус
+    console.log('Response Headers:', response.headers);  // Логируем заголовки
+    console.log('Response Data:', data);  // Логируем данные ответа
+
+    if (!response.ok) {
+      console.error('Error fetching token:', data);  // Логируем ошибку
     }
+
+    return data;
+  } catch (err) {
+    console.error('Request error:', err);  // Логируем ошибку запроса
+    return null;
   }
+}
 
   // Проверка на наличие кода в URL
   if (code) {
