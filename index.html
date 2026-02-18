@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker</h1> 
+  <h1>EVE Tracker 1</h1> 
 
   <!-- Страница авторизации -->
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;" id="login-container">
@@ -45,7 +45,9 @@
     </div>
 
     <div id="missions-info"></div>
-    
+
+    <!-- Кнопка выхода -->
+    <button id="logoutBtn" style="margin-top: 20px;">Выход</button>
   </div>
 
   <script>
@@ -120,14 +122,12 @@
 
       if (!code) {
         statusEl.textContent = localStorage.getItem("access_token") ? "залогинен" : "не залогинен";
-        console.log("Токен не найден");
         return;
       }
 
       const expectedState = sessionStorage.getItem("eve_state");
       if (!expectedState || returnedState !== expectedState) {
         statusEl.textContent = "ошибка безопасности (state mismatch)";
-        console.log("Ошибка безопасности (state mismatch)");
         return;
       }
 
@@ -137,8 +137,6 @@
         const token = await exchangeCodeForTokenPKCE(code);
         localStorage.setItem("access_token", token.access_token);
         localStorage.setItem("refresh_token", token.refresh_token);
-
-        console.log("Токен сохранен:", token.access_token);
 
         statusEl.textContent = "залогинен";
 
@@ -196,7 +194,20 @@
       document.getElementById("missions-info").textContent = `Миссии для ${selectedCorp} — текущее количество выполненных миссий: ...`;
     }
 
+    // Функция для выхода
+    function logout() {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+
+      // Показываем экран авторизации
+      loginContainer.style.display = 'flex';
+      dashboard.style.display = 'none';
+
+      statusEl.textContent = "не залогинен";  // Сбрасываем статус
+    }
+
     document.getElementById('loginBtn').addEventListener('click', startLogin);
+    document.getElementById('logoutBtn').addEventListener('click', logout);
   </script>
 </body>
 </html>
