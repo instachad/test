@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 6</h1>
+  <h1>EVE Tracker 7</h1>
 
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
     <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
@@ -97,8 +97,7 @@ async function exchangeCodeForToken(code) {
       "&redirect_uri=" + encodeURIComponent(redirectUri) +
       "&client_id=" + clientId +
       "&scope=" + encodeURIComponent(scopes) +
-      "&state=" + state;
-
+      
     window.location.href = authUrl;
   });
 </script>
