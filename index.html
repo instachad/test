@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 12</h1>
+  <h1>EVE Tracker 3</h1>
 
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
     <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
@@ -34,12 +34,13 @@
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
 
-  async function exchangeCodeForToken(code) {
-    const body = new URLSearchParams();
-    body.append("grant_type", "authorization_code");
-    body.append("code", code);
-    body.append("redirect_uri", redirectUri);
+async function exchangeCodeForToken(code) {
+  const body = new URLSearchParams();
+  body.append("grant_type", "authorization_code");
+  body.append("code", code);
+  body.append("redirect_uri", redirectUri);
 
+  try {
     const response = await fetch("https://login.eveonline.com/v2/oauth/token", {
       method: "POST",
       headers: {
@@ -49,9 +50,20 @@
       body: body.toString()
     });
 
-    return response.json();
-  }
+    const data = await response.json();
 
+    console.log('Response data:', data); // Логируем ответ
+
+    if (!response.ok) {
+      console.error('Error fetching token:', data); // Логируем ошибку
+    }
+
+    return data;
+  } catch (err) {
+    console.error('Request error:', err); // Логируем ошибку запроса
+    return null;
+  }
+}
   if (code) {
     statusEl.textContent = "обмен кода на токен...";
 
