@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 5</h1>
+  <h1>EVE Tracker 6</h1>
 
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
     <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
@@ -47,14 +47,17 @@ async function exchangeCodeForToken(code) {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": "Basic " + btoa(clientId + ":") // это правильно, для Client ID
+        "Authorization": "Basic " + btoa(clientId + ":")
       },
       body: body.toString()
     });
 
     const data = await response.json();
 
-    console.log('Response data:', data); // Логируем ответ
+    // Логируем полный ответ от сервера
+    console.log('Response Status:', response.status);  // Статус ответа
+    console.log('Response Headers:', response.headers); // Заголовки ответа
+    console.log('Response Data:', data);  // Данные из ответа
 
     if (!response.ok) {
       console.error('Error fetching token:', data); // Логируем ошибку
