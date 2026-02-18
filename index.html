@@ -7,6 +7,15 @@
 </head>
 <body>
   <h1>EVE Tracker</h1>
-  <p>Страница работает. Версия: 1</p>
+
+  <p>
+    Страница работает. Версия:
+    <span id="v"></span>
+  </p>
+
+  <script>
+    document.getElementById('v').textContent =
+      new Date().toISOString();
+  </script>
 </body>
 </html>
