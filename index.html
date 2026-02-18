@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 7</h1>
+  <h1>EVE Tracker 4</h1>
 
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
     <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
@@ -23,73 +23,78 @@
   </p>
 
 <script>
-  const clientId = "4c2f7825780f4d0cba80a75d1a8a0c69";
-  console.log("Client ID:", clientId);  // Логируем clientId
-  
-  const redirectUri = "https://instachad.github.io/test/";
-  const scopes = "esi-wallet.read_character_wallet.v1 esi-characters.read_standings.v1";
+  const clientId = "4c2f7825780f4d0cba80a75d1a8a0c69";  // Client ID
+  const redirectUri = "https://instachad.github.io/test/";  // Callback URL
+  const scopes = "esi-wallet.read_character_wallet.v1 esi-characters.read_standings.v1";  // Требуемые права
 
-  document.getElementById('v').textContent = new Date().toISOString();
+  document.getElementById('v').textContent = new Date().toISOString();  // Версия страницы
 
-  const statusEl = document.getElementById('status');
+  const statusEl = document.getElementById('status');  // Статус авторизации
 
+  // Получение параметра "code" из URL, если он есть
   const urlParams = new URLSearchParams(window.location.search);
   const code = urlParams.get("code");
 
-async function exchangeCodeForToken(code) {
-  const body = new URLSearchParams();
-  body.append("grant_type", "authorization_code");
-  body.append("code", code);
-  body.append("redirect_uri", redirectUri);
+  // Функция для обмена кода на токен
+  async function exchangeCodeForToken(code) {
+    const body = new URLSearchParams();
+    body.append("grant_type", "authorization_code");
+    body.append("code", code);
+    body.append("redirect_uri", redirectUri);
 
-  try {
-    const response = await fetch("https://login.eveonline.com/v2/oauth/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "Authorization": "Basic " + btoa(clientId + ":")
-      },
-      body: body.toString()
-    });
+    try {
+      const response = await fetch("https://login.eveonline.com/v2/oauth/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Authorization": "Basic " + btoa(clientId + ":")  // Авторизация через Client ID
+        },
+        body: body.toString()
+      });
 
-    const data = await response.json();
+      const data = await response.json();  // Ответ от сервера
 
-    // Логируем полный ответ от сервера
-    console.log('Response Status:', response.status);  // Статус ответа
-    console.log('Response Headers:', response.headers); // Заголовки ответа
-    console.log('Response Data:', data);  // Данные из ответа
+      console.log('Response Status:', response.status);  // Логируем статус ответа
+      console.log('Response Data:', data);  // Логируем данные ответа
 
-    if (!response.ok) {
-      console.error('Error fetching token:', data); // Логируем ошибку
+      if (!response.ok) {
+        console.error('Error fetching token:', data);  // Логируем ошибку, если она есть
+        statusEl.textContent = "ошибка получения токена";  // Обновляем статус
+        return null;
+      }
+
+      return data;  // Возвращаем данные с токеном
+    } catch (err) {
+      console.error('Request error:', err);  // Логируем ошибку запроса
+      statusEl.textContent = "ошибка запроса";  // Обновляем статус
+      return null;
     }
-
-    return data;
-  } catch (err) {
-    console.error('Request error:', err); // Логируем ошибку запроса
-    return null;
   }
-}
-  if (code) {
-    statusEl.textContent = "обмен кода на токен...";
 
+  // Проверка на наличие кода в URL
+  if (code) {
+    statusEl.textContent = "обмен кода на токен...";  // Информируем пользователя
+
+    // Обмен кода на токен
     exchangeCodeForToken(code)
       .then(data => {
-        if (data.access_token) {
-          localStorage.setItem("access_token", data.access_token);
-          statusEl.textContent = "залогинен";
+        if (data && data.access_token) {
+          localStorage.setItem("access_token", data.access_token);  // Сохраняем токен
+          statusEl.textContent = "залогинен";  // Обновляем статус
         } else {
-          statusEl.textContent = "ошибка получения токена";
+          statusEl.textContent = "ошибка получения токена";  // Если токен не получен
           console.log(data);
         }
       })
       .catch(err => {
-        statusEl.textContent = "ошибка запроса";
+        statusEl.textContent = "ошибка запроса";  // Обновляем статус при ошибке
         console.error(err);
       });
   }
 
+  // Обработчик клика на кнопку логина
   document.getElementById('loginBtn').addEventListener('click', () => {
-    const state = Math.random().toString(36).substring(2);
+    const state = Math.random().toString(36).substring(2);  // Генерация случайного state для безопасности
 
     const authUrl =
       "https://login.eveonline.com/v2/oauth/authorize/?" +
@@ -97,8 +102,9 @@ async function exchangeCodeForToken(code) {
       "&redirect_uri=" + encodeURIComponent(redirectUri) +
       "&client_id=" + clientId +
       "&scope=" + encodeURIComponent(scopes) +
-      
-    window.location.href = authUrl;
+      "&state=" + state;  // URL для авторизации
+
+    window.location.href = authUrl;  // Перенаправляем на страницу логина EVE
   });
 </script>
 
