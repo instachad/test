@@ -263,6 +263,7 @@ async function fetchStandings() {
 
     const names = await namesResp.json();
     const idToName = new Map(names.map(x => [x.id, x.name]));
+    for (const [id, name] of idToName.entries()) nameCache.set(id, name);
 
     standingsPretty = filtered.map(x => ({
       id: x.from_id,
@@ -309,6 +310,13 @@ async function renderBarsForCorpId(corpId) {
     bars.innerHTML = `<div style="opacity:.7;">Не нашёл эту корпорацию в standings.</div>`;
     return;
   }
+  const cached = nameCache.get(fid);
+if (cached) {
+  faction = { id: fid, type: "faction", name: cached, standing: 0 };
+} else {
+  // твой запрос /universe/names/ как и был
+}
+  const nameCache = new Map(); // id -> name
 
   bars.innerHTML = "";
 
