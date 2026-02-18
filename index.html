@@ -6,7 +6,7 @@
   <title>EVE Tracker</title>
 </head>
 <body>
-  <h1>EVE Tracker 3</h1>
+  <h1>EVE Tracker 4</h1>
 
   <div style="display:flex; gap:12px; align-items:center; padding:12px; border:1px solid #ddd; border-radius:12px; max-width:520px;">
     <button id="loginBtn" style="padding:10px 14px; font-size:16px; cursor:pointer;">
@@ -25,13 +25,17 @@
 <script>
 const clientId = "4c2f7825780f4d0cba80a75d1a8a0c69";  // Client ID
 const redirectUri = "https://instachad.github.io/test/";  // Callback URL
+const scopes = "publicData";  // Права доступа
 
 document.getElementById('v').textContent = new Date().toISOString();  // Версия страницы
 
 const statusEl = document.getElementById('status');  // Статус авторизации
 
-const urlParams = new URLSearchParams(window.location.search);
-const code = urlParams.get("code");
+// Проверка на наличие токена
+const accessToken = localStorage.getItem("access_token");
+if (accessToken) {
+  statusEl.textContent = "залогинен";
+}
 
 // Функция для обмена кода на токен
 async function exchangeCodeForToken(code, state) {
@@ -59,7 +63,6 @@ async function exchangeCodeForToken(code, state) {
 
     console.log('Response Status:', response.status);  // Логируем статус ответа
     console.log('Response Data:', data);  // Логируем данные ответа
-    console.log("state: ", state);  // Логируем state
 
     if (!response.ok) {
       console.error('Error fetching token:', data);  // Логируем ошибку
@@ -75,11 +78,19 @@ async function exchangeCodeForToken(code, state) {
 }
 
 // Проверка на наличие кода в URL
-if (code) {
+const urlParams = new URLSearchParams(window.location.search);
+const code = urlParams.get("code");
+const stateFromUrl = urlParams.get("state");
+const state = localStorage.getItem("state");  // Сохраняем state
+
+if (stateFromUrl !== state) {
+  console.error('State mismatch!');
+  statusEl.textContent = "ошибка безопасности";
+} else if (code) {
   statusEl.textContent = "обмен кода на токен...";  // Информируем пользователя
 
   // Обмен кода на токен
-  exchangeCodeForToken(code)
+  exchangeCodeForToken(code, state)
     .then(data => {
       if (data && data.access_token) {
         localStorage.setItem("access_token", data.access_token);  // Сохраняем токен
@@ -97,7 +108,8 @@ if (code) {
 
 // Обработчик клика на кнопку логина
 document.getElementById('loginBtn').addEventListener('click', () => {
-  const state = Math.random().toString(36).substring(2);  // Генерация случайного state для безопасности
+  const newState = Math.random().toString(36).substring(2);  // Генерация случайного state для безопасности
+  localStorage.setItem("state", newState);  // Сохраняем state
 
   const authUrl =
     "https://login.eveonline.com/v2/oauth/authorize/?" +
@@ -105,7 +117,7 @@ document.getElementById('loginBtn').addEventListener('click', () => {
     "&redirect_uri=" + encodeURIComponent(redirectUri) +
     "&client_id=" + clientId +
     "&scope=" + encodeURIComponent(scopes) +
-    "&state=" + state;  // Добавляем state в запрос
+    "&state=" + newState;  // Добавляем state в запрос
 
   window.location.href = authUrl;  // Перенаправляем на страницу логина EVE
 });
