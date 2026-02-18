@@ -312,36 +312,40 @@ async function renderBarsForCorpId(corpId) {
 
   bars.innerHTML = "";
 
-  // Узнаём faction_id корпы
   let faction = null;
+
   try {
     const resp = await fetch(`https://esi.evetech.net/latest/corporations/${corp.id}/`);
     if (resp.ok) {
       const corpData = await resp.json();
+
       if (corpData.faction_id) {
-  const fid = corpData.faction_id;
+        const fid = corpData.faction_id;
 
-  // 1) пробуем найти standing по фракции (если он не нулевой)
-  faction = standingsPretty.find(x => x.type === "faction" && x.id === fid) || null;
+        // 1) пробуем найти standing по фракции (если он не нулевой)
+        faction = standingsPretty.find(x => x.type === "faction" && x.id === fid) || null;
 
-  // 2) если не нашли (скорее всего standing=0), всё равно покажем фракцию
-  if (!faction) {
-    // получаем имя фракции через /universe/names
-    try {
-      const nResp = await fetch("https://esi.evetech.net/latest/universe/names/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify([fid])
-      });
-      const n = await nResp.json();
-      const fname = (Array.isArray(n) && n[0] && n[0].name) ? n[0].name : String(fid);
+        // 2) если не нашли (скорее всего standing=0), всё равно покажем фракцию
+        if (!faction) {
+          try {
+            const nResp = await fetch("https://esi.evetech.net/latest/universe/names/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify([fid])
+            });
+            const n = await nResp.json();
+            const fname = (Array.isArray(n) && n[0] && n[0].name) ? n[0].name : String(fid);
 
-      faction = { id: fid, type: "faction", name: fname, standing: 0 };
-    } catch (e) {
-      faction = { id: fid, type: "faction", name: String(fid), standing: 0 };
+            faction = { id: fid, type: "faction", name: fname, standing: 0 };
+          } catch (e) {
+            faction = { id: fid, type: "faction", name: String(fid), standing: 0 };
+          }
+        }
+      }
     }
+  } catch (e) {
+    console.log("corp faction lookup failed", e);
   }
-} catch (e) {}
 
   if (faction) {
     bars.appendChild(createBar(faction.name, faction.standing, "faction"));
