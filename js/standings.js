@@ -1,11 +1,9 @@
-// js/standings.js
 "use strict";
 
-import { getNpcFactionIdForCorp } from "./esi.js"; // Импортируем функцию для получения фракции
-import { esiFetchJson } from "./esi.js";  // Импортируем функцию для работы с EVE API
+// Импортируем функцию для работы с EVE API
+import { esiFetchJson } from "./esi.js";
 
-/* ===== skills ===== */
-
+// ===== skills =====
 function applyStandingSkill(base, level) {
   // effective = base + (10 - base) * 0.04 * level
   return base + (10 - base) * 0.04 * level;
@@ -23,8 +21,7 @@ async function fetchSocialSkillLevels() {
 }
 
 /* ===== standings fetch ===== */
-
-async function fetchStandings() {
+export async function fetchStandings() {
   const charId = localStorage.getItem("character_id");
   const bars = document.getElementById("barsContainer");
   if (!charId || !bars) return;
@@ -68,8 +65,7 @@ async function fetchStandings() {
   bars.innerHTML = `<div class="small muted">Выбери корпорацию.</div>`;
 }
 
-/* ===== UI: select ===== */
-
+// ===== UI: select =====
 function populateCorpSelect() {
   const select = document.getElementById("corpSelect");
   if (!select) return;
@@ -87,8 +83,7 @@ function populateCorpSelect() {
     });
 }
 
-/* ===== faction resolver ===== */
-
+// ===== faction resolver =====
 async function getFactionIdForCorp(corp) {
   // 1) пробуем ESI /corporations/{corp_id}
   try {
@@ -127,8 +122,7 @@ async function getFactionName(factionId) {
   return "Faction";
 }
 
-/* ===== render ===== */
-
+// ===== render =====
 async function renderBarsForCorpId(corpId) {
   const bars = document.getElementById("barsContainer");
   if (!bars) return;
@@ -227,5 +221,3 @@ function createBar(label, baseStanding, kind) {
 }
 
 window.addEventListener('load', fetchStandings);  // Эта строка вызывает fetchStandings при загрузке страницы
-
-export { fetchStandings };
