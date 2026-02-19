@@ -224,3 +224,6 @@ function createBar(label, baseStanding, kind) {
 
   return wrapper;
 }
+
+window.addEventListener('load', fetchStandings);  // Эта строка вызывает fetchStandings при загрузке страницы
+
