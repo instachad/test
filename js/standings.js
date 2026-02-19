@@ -12,7 +12,7 @@ async function publicFetchJson(url, options = {}) {
     const txt = await res.text().catch(() => "");
     throw new Error(`HTTP ${res.status}: ${txt}`);
   }
-  return res.json();
+  return res.json();  // Парсим и возвращаем JSON
 }
 
 // ===== skills =====
