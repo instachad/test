@@ -1,6 +1,8 @@
 // js/standings.js
 "use strict";
 
+import { getNpcFactionIdForCorp } from "./esi.js"; // Импортируем функцию для получения фракции
+
 /* ===== skills ===== */
 
 function applyStandingSkill(base, level) {
@@ -95,31 +97,10 @@ async function getFactionIdForCorp(corp) {
     console.warn("corp info fetch failed", e);
   }
 
-  // 2) fallback по имени (империи)
-  const n = (corp.name || "").toLowerCase();
+  // 2) если ESI не дала фракцию, пробуем получить её из словаря
+  const factionId = await getNpcFactionIdForCorp(corp.id); // Получаем из словаря
 
-  const isCaldari =
-    n.includes("caldari") || n.includes("state") || n.includes("kaalakiota") || n.includes("lai dai") ||
-    n.includes("ishukone") || n.includes("caldari navy");
-
-  const isGallente =
-    n.includes("gallente") || n.includes("federation") || n.includes("federal") ||
-    n.includes("duvolle") || n.includes("rodens") || n.includes("aliastra");
-
-  const isAmarr =
-    n.includes("amarr") || n.includes("empire") || n.includes("imperial") ||
-    n.includes("khanid") || n.includes("sarum") || n.includes("court chamberlain");
-
-  const isMinmatar =
-    n.includes("minmatar") || n.includes("republic") || n.includes("tribe") ||
-    n.includes("thukker") || n.includes("brutor") || n.includes("krusual");
-
-  if (isCaldari) return 500001;
-  if (isMinmatar) return 500002;
-  if (isAmarr) return 500003;
-  if (isGallente) return 500004;
-
-  return null;
+  return factionId;  // Возвращаем ID фракции (или null, если не найдено)
 }
 
 async function getFactionName(factionId) {
