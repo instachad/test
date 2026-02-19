@@ -84,6 +84,7 @@ const scopes = [
 ].join(" ");
 let standingsRaw = [];      // оригинал из /standings
 let standingsPretty = [];   // уже с именами (id + name + type + standing)
+const nameCache = new Map(); // id -> name
 
 fetch("https://api.github.com/repos/instachad/test/commits?per_page=1")
   .then(r => r.json())
@@ -362,13 +363,6 @@ async function renderBarsForCorpId(corpId) {
     bars.innerHTML = `<div style="opacity:.7;">Не нашёл эту корпорацию в standings.</div>`;
     return;
   }
-  const cached = nameCache.get(fid);
-if (cached) {
-  faction = { id: fid, type: "faction", name: cached, standing: 0 };
-} else {
-  // твой запрос /universe/names/ как и был
-}
-  const nameCache = new Map(); // id -> name
 
   bars.innerHTML = "";
 
@@ -380,29 +374,35 @@ if (cached) {
       const corpData = await resp.json();
 
       if (corpData.faction_id) {
-        const fid = corpData.faction_id;
+  const fid = corpData.faction_id;
 
-        // 1) пробуем найти standing по фракции (если он не нулевой)
-        faction = standingsPretty.find(x => x.type === "faction" && x.id === fid) || null;
+  // 1) пробуем найти standing по фракции
+  faction = standingsPretty.find(x => x.type === "faction" && x.id === fid) || null;
 
-        // 2) если не нашли (скорее всего standing=0), всё равно покажем фракцию
-        if (!faction) {
-          try {
-            const nResp = await fetch("https://esi.evetech.net/latest/universe/names/", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify([fid])
-            });
-            const n = await nResp.json();
-            const fname = (Array.isArray(n) && n[0] && n[0].name) ? n[0].name : String(fid);
+  // 2) если standing не найден (скорее всего 0), всё равно покажем фракцию
+  if (!faction) {
+    const cached = nameCache.get(fid);
 
-            faction = { id: fid, type: "faction", name: fname, standing: 0 };
-          } catch (e) {
-            faction = { id: fid, type: "faction", name: String(fid), standing: 0 };
-          }
-        }
+    if (cached) {
+      faction = { id: fid, type: "faction", name: cached, standing: 0 };
+    } else {
+      try {
+        const nResp = await fetch("https://esi.evetech.net/latest/universe/names/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify([fid])
+        });
+        const n = await nResp.json();
+        const fname = (Array.isArray(n) && n[0] && n[0].name) ? n[0].name : String(fid);
+
+        nameCache.set(fid, fname);
+        faction = { id: fid, type: "faction", name: fname, standing: 0 };
+      } catch {
+        faction = { id: fid, type: "faction", name: String(fid), standing: 0 };
       }
     }
+  }
+}
   } catch (e) {
     console.log("corp faction lookup failed", e);
   }
