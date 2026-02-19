@@ -1,9 +1,6 @@
-// js/auth.js
 "use strict";
 
-import { fetchStandings } from "./standings.js";  // Импортируем функцию из standings.js
-
-/* ===== token storage ===== */
+// Данные для хранения токенов
 const LS = {
   access: "access_token",
   refresh: "refresh_token",
@@ -11,10 +8,12 @@ const LS = {
   characterId: "character_id",
 };
 
+// Функция для получения refresh токена
 function getRefreshToken() {
   return localStorage.getItem(LS.refresh);
 }
 
+// Функция для хранения токенов
 function storeTokens(t) {
   localStorage.setItem(LS.access, t.access_token);
   if (t.refresh_token) localStorage.setItem(LS.refresh, t.refresh_token);
@@ -23,6 +22,7 @@ function storeTokens(t) {
   localStorage.setItem(LS.expiresAt, String(expAt));
 }
 
+// Функция для выхода
 function logout(reason = "") {
   localStorage.removeItem(LS.access);
   localStorage.removeItem(LS.refresh);
@@ -33,6 +33,7 @@ function logout(reason = "") {
   if (reason) console.warn("Logout:", reason);
 }
 
+// Функция для обновления access токена
 let refreshInFlight = null;
 
 async function refreshAccessToken() {
@@ -70,38 +71,18 @@ async function refreshAccessToken() {
   }
 }
 
-async function ensureValidAccessToken() {
+// Функция для проверки валидности access токена
+export async function ensureValidAccessToken() {
   const token = localStorage.getItem(LS.access);
   const expAt = Number(localStorage.getItem(LS.expiresAt) || "0");
 
   if (!token || !expAt || Date.now() >= expAt) {
-    return await refreshAccessToken();
+    return await refreshAccessToken(); // Если токен не найден или он истек, обновляем
   }
-  return token;
+  return token; // Если токен еще валиден, возвращаем его
 }
 
-/* ===== PKCE ===== */
-function base64UrlEncode(bytes) {
-  return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
-async function sha256(input) {
-  const data = new TextEncoder().encode(input);
-  const hash = await crypto.subtle.digest("SHA-256", data);
-  return base64UrlEncode(new Uint8Array(hash));
-}
-
-function randomString(len = 64) {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
-  const arr = new Uint8Array(len);
-  crypto.getRandomValues(arr);
-  return Array.from(arr, (x) => chars[x % chars.length]).join("");
-}
-
-/* ===== login ===== */
+// Функция для старта логина через OAuth
 async function startLogin() {
   const state = randomString(24);
   const verifier = randomString(64);
@@ -123,109 +104,4 @@ async function startLogin() {
   window.location.href = authUrl;
 }
 
-async function exchange(code) {
-  const verifier = sessionStorage.getItem("eve_code_verifier");
-  if (!verifier) throw new Error("Missing PKCE verifier");
-
-  const body = new URLSearchParams();
-  body.append("grant_type", "authorization_code");
-  body.append("code", code);
-  body.append("client_id", clientId);
-  body.append("code_verifier", verifier);
-
-  const resp = await fetch("https://login.eveonline.com/v2/oauth/token", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: body.toString(),
-  });
-
-  const data = await resp.json().catch(() => ({}));
-  if (!resp.ok) throw new Error(JSON.stringify(data));
-  return data;
-}
-
-async function verifyToken() {
-  let token;
-  try {
-    token = await ensureValidAccessToken();
-  } catch (e) {
-    logout("no valid token");
-    return;
-  }
-
-  let resp = await fetch("https://login.eveonline.com/oauth/verify", {
-    headers: { Authorization: "Bearer " + token },
-  });
-
-  if (!resp.ok) {
-    try {
-      token = await refreshAccessToken();
-      resp = await fetch("https://login.eveonline.com/oauth/verify", {
-        headers: { Authorization: "Bearer " + token },
-      });
-
-      if (!resp.ok) {
-        logout("verify failed");
-        return;
-      }
-    } catch (e) {
-      logout("verify failed");
-      return;
-    }
-  }
-
-  const data = await resp.json().catch(() => ({}));
-
-  document.getElementById("charName").textContent = data.CharacterName || "???";
-  document.getElementById("charId").textContent = data.CharacterID || "???";
-  localStorage.setItem(LS.characterId, String(data.CharacterID || ""));
-
-  fetchStandings();
-}
-
-async function handleCallbackOnLoad() {
-  const params = new URLSearchParams(window.location.search);
-  const code = params.get("code");
-  const returnedState = params.get("state");
-
-  if (!code) {
-    const hasRefresh = !!getRefreshToken();
-    setUiLoggedIn(hasRefresh);
-
-    if (hasRefresh) {
-      try {
-        await verifyToken();
-      } catch (e) {
-        console.warn(e);
-        logout("session invalid");
-      }
-    }
-    return;
-  }
-
-  const expectedState = sessionStorage.getItem("eve_state");
-  if (returnedState !== expectedState) {
-    if (statusEl) statusEl.textContent = "state mismatch";
-    return;
-  }
-
-  try {
-    const token = await exchange(code);
-    storeTokens(token);
-
-    history.replaceState({}, document.title, redirectUri);
-    setUiLoggedIn(true);
-
-    await verifyToken();
-  } catch (e) {
-    console.error(e);
-    if (statusEl) statusEl.textContent = "ошибка токена";
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  const loginBtn = document.getElementById("loginBtn");
-  if (loginBtn) loginBtn.addEventListener("click", startLogin);
-
-  handleCallbackOnLoad().catch((e) => console.error(e));
-});
+export { startLogin, logout };  // Экспортируем нужные функции

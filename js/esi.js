@@ -1,9 +1,9 @@
 "use strict";
 
-// Функция для получения и обновления токенов
+// Импортируем функцию для проверки и обновления токенов
 import { ensureValidAccessToken, refreshAccessToken } from './auth.js';
 
-// Экспортируем функцию esiFetchJson
+// Функция для выполнения запросов с токеном
 export async function esiFetchJson(url, options = {}) {
   const doReq = async (accessToken) => {
     const headers = new Headers(options.headers || {});
