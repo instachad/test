@@ -912,12 +912,21 @@
 
     /* ======== BAR RENDER ======== */
 
-    function createBar(label, standing, kind) {
+    function createBar(label, baseStanding, kind) {
       const wrapper = document.createElement("div");
       wrapper.style.marginBottom = "16px";
 
+      // Выбираем нужный скилл:
+      // base >= 0 -> Connections, base < 0 -> Diplomacy
+      const level = baseStanding >= 0
+        ? (socialSkills.connections || 0)
+        : (socialSkills.diplomacy || 0);
+
+      const effective = applyStandingSkill(baseStanding, level);
+      const bonus = effective - baseStanding;
+
       const title = document.createElement("div");
-      title.textContent = `${label} (${standing.toFixed(2)})`;
+      title.textContent = `${label} ${effective.toFixed(2)} (${baseStanding.toFixed(2)}+${bonus.toFixed(2)})`;
       title.style.marginBottom = "6px";
       title.style.fontWeight = "600";
 
@@ -927,7 +936,9 @@
       bar.style.background = "#262626";
       bar.style.borderRadius = "2px";
 
-      const percent = ((Math.max(-10, Math.min(10, standing)) + 10) / 20) * 100;
+      // Маркер ставим по effective
+      const clamped = Math.max(-10, Math.min(10, effective));
+      const percent = ((clamped + 10) / 20) * 100;
 
       const marker = document.createElement("div");
       marker.style.position = "absolute";
