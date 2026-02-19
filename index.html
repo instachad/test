@@ -498,45 +498,7 @@
       </div>
 
       <div id="barsContainer" style="margin-top:14px;">
-
-        <!-- FAKE: faction bar -->
-        <div class="barBlock">
-          <div class="barTitle">
-            <div class="name">Caldari State</div>
-            <div class="num">+6.42</div>
-          </div>
-
-          <div class="bar faction">
-            <div class="ticks"></div>
-            <div class="zero"></div>
-
-            <!-- fill from center to value -->
-            <div class="fill pos" style="left:50%; width:32.1%;"></div>
-            <!-- marker at value -->
-            <div class="marker pos" style="left:82.1%;"></div>
-          </div>
-        </div>
-
-        <!-- FAKE: corp bar -->
-        <div class="barBlock">
-          <div class="barTitle">
-            <div class="name">Caldari Navy</div>
-            <div class="num">-2.10</div>
-          </div>
-
-          <div class="bar corp">
-            <div class="ticks"></div>
-            <div class="zero"></div>
-
-            <div class="fill neg" style="left:39.5%; width:10.5%;"></div>
-            <div class="marker neg" style="left:39.5%;"></div>
-          </div>
-        </div>
-
-        <div class="small muted" style="margin-top:10px;">
-          Сейчас это пример. Потом эти цифры и полосы будут строиться из ESI.
-        </div>
-
+        <div class="small muted">Выбери корпорацию.</div>
       </div>
     </div>
 
@@ -888,86 +850,143 @@
       const corp = standingsPretty.find(x =>
         x.type === "npc_corp" && String(x.id) === String(corpId)
       );
-      if (!corp) return;
+      if (!corp) {
+        bars.innerHTML = `<div class="small muted">Выбери корпорацию.</div>`;
+        return;
+      }
 
-      // 1) Узнаём faction_id корпорации
+      // 1) пытаемся узнать faction_id через ESI
       let factionId = null;
+
       try {
-        const corpInfo = await publicFetchJson(`https://esi.evetech.net/latest/corporations/${corp.id}/?_=${Date.now()}`);
-        factionId = corpInfo.faction_id || null;
+        const corpData = await publicFetchJson(
+          `https://esi.evetech.net/latest/corporations/${corp.id}/?_=${Date.now()}`
+        );
+        if (corpData && corpData.faction_id) factionId = corpData.faction_id;
       } catch (e) {
         console.warn("corp info fetch failed", e);
       }
 
-      // 2) Если есть фракция — рисуем её бар ПЕРВЫМ
+      // 2) если ESI не дал faction_id (часто так у NPC корп), делаем простой хак по имени
+      if (!factionId) {
+        const n = (corp.name || "").toLowerCase();
+        // empire faction IDs (ESI)
+        // Caldari State 500001, Minmatar Republic 500002, Amarr Empire 500003, Gallente Federation 500004
+        if (n.includes("caldari")) factionId = 500001;
+        else if (n.includes("minmatar")) factionId = 500002;
+        else if (n.includes("amarr")) factionId = 500003;
+        else if (n.includes("gallente")) factionId = 500004;
+      }
+
+      // если нашли фракцию — рисуем её первой
       if (factionId) {
         let factionStandingObj =
-          standingsPretty.find(x => x.type === "faction" && String(x.id) === String(factionId));
+          standingsPretty.find(x => x.type === "faction" && Number(x.id) === Number(factionId));
 
-        // если в standings нет записи про фракцию — считаем 0
-        const factionBase = factionStandingObj ? factionStandingObj.standing : 0;
+        // если в standings нет записи по этой фракции — считаем, что 0
+        if (!factionStandingObj) {
+          factionStandingObj = { id: factionId, type: "faction", name: null, standing: 0 };
+        }
 
-        // имя фракции: из кэша, иначе подгрузим через /universe/names/
+        // имя фракции из кеша/ESI
         let factionName = nameCache.get(factionId);
         if (!factionName) {
           try {
-            const names = await publicFetchJson("https://esi.evetech.net/latest/universe/names/", {
+            const arr = await publicFetchJson("https://esi.evetech.net/latest/universe/names/", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify([Number(factionId)])
             });
-            factionName = (names && names[0] && names[0].name) ? names[0].name : `Faction ${factionId}`;
-            nameCache.set(Number(factionId), factionName);
+            if (arr && arr[0] && arr[0].name) {
+              factionName = arr[0].name;
+              nameCache.set(factionId, factionName);
+            }
           } catch (e) {
-            factionName = `Faction ${factionId}`;
+            console.warn("faction name fetch failed", e);
           }
         }
 
-        bars.appendChild(createBar(factionName, factionBase, "faction"));
+        bars.appendChild(createBar(factionName || "Faction", factionStandingObj.standing, "faction"));
       }
 
-      // 3) Потом всегда рисуем корпу
+      // затем корпа
       bars.appendChild(createBar(corp.name, corp.standing, "corp"));
     }
 
     /* ======== BAR RENDER ======== */
 
     function createBar(label, baseStanding, kind) {
+      // kind: "faction" | "corp"
       const wrapper = document.createElement("div");
-      wrapper.style.marginBottom = "16px";
+      wrapper.className = "barBlock";
 
-      // Выбираем нужный скилл:
-      // base >= 0 -> Connections, base < 0 -> Diplomacy
-      const level = baseStanding >= 0
-        ? (socialSkills.connections || 0)
-        : (socialSkills.diplomacy || 0);
-
+      // skills
+      const level = baseStanding >= 0 ? (socialSkills.connections || 0) : (socialSkills.diplomacy || 0);
       const effective = applyStandingSkill(baseStanding, level);
       const bonus = effective - baseStanding;
 
-      const title = document.createElement("div");
-      title.textContent = `${label} ${effective.toFixed(2)} (${baseStanding.toFixed(2)}+${bonus.toFixed(2)})`;
-      title.style.marginBottom = "6px";
-      title.style.fontWeight = "600";
-
-      const bar = document.createElement("div");
-      bar.style.position = "relative";
-      bar.style.height = "18px";
-      bar.style.background = "#262626";
-      bar.style.borderRadius = "2px";
-
-      // Маркер ставим по effective
+      // clamp for drawing
       const clamped = Math.max(-10, Math.min(10, effective));
-      const percent = ((clamped + 10) / 20) * 100;
+      const pct = ((clamped + 10) / 20) * 100; // 0..100
+
+      const isZero = Math.abs(clamped) < 1e-9;
+      const signClass = isZero ? "zero" : (clamped > 0 ? "pos" : "neg");
+
+      // title
+      const title = document.createElement("div");
+      title.className = "barTitle";
+
+      const nameEl = document.createElement("div");
+      nameEl.className = "name";
+      nameEl.textContent = label;
+
+      const numEl = document.createElement("div");
+      numEl.className = "num";
+      // пример: 2.79 (1.41+1.38)
+      const baseTxt = baseStanding.toFixed(2);
+      const effTxt = effective.toFixed(2);
+      const bonusTxt = (bonus >= 0 ? "+" : "") + bonus.toFixed(2);
+      numEl.textContent = `${effTxt} (${baseTxt}${bonusTxt})`;
+
+      title.appendChild(nameEl);
+      title.appendChild(numEl);
+
+      // bar
+      const bar = document.createElement("div");
+      bar.className = `bar ${kind}`;
+
+      const ticks = document.createElement("div");
+      ticks.className = "ticks";
+
+      const zero = document.createElement("div");
+      zero.className = "zero";
+
+      const fill = document.createElement("div");
+      fill.className = `fill ${signClass}`;
 
       const marker = document.createElement("div");
-      marker.style.position = "absolute";
-      marker.style.left = `${percent}%`;
-      marker.style.width = "2px";
-      marker.style.height = "100%";
-      marker.style.background = kind === "faction" ? "#5b7ea6" : "#6e9c78";
+      marker.className = `marker ${signClass}`;
 
+      // fill from center (50%) to value
+      if (isZero) {
+        fill.style.left = "50%";
+        fill.style.width = "0%";
+        marker.style.left = "50%";
+      } else if (clamped > 0) {
+        fill.style.left = "50%";
+        fill.style.width = `${pct - 50}%`;
+        marker.style.left = `${pct}%`;
+      } else {
+        fill.style.left = `${pct}%`;
+        fill.style.width = `${50 - pct}%`;
+        marker.style.left = `${pct}%`;
+      }
+
+      bar.appendChild(ticks);
+      bar.appendChild(zero);
+      bar.appendChild(fill);
       bar.appendChild(marker);
+
       wrapper.appendChild(title);
       wrapper.appendChild(bar);
 
