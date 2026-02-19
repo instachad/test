@@ -789,13 +789,15 @@
 
       const ids = [...new Set(filtered.map(x => x.from_id))];
 
-      const namesResp = await fetch("https://esi.evetech.net/latest/universe/names/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(ids)
-      });
+      const names = await publicFetchJson(
+        "https://esi.evetech.net/latest/universe/names/",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(ids)
+        }
+      );
 
-      const names = await namesResp.json();
       const idToName = new Map(names.map(x => [x.id, x.name]));
       idToName.forEach((name, id) => nameCache.set(id, name));
 
@@ -808,6 +810,18 @@
 
       populateCorpSelect();
       bars.innerHTML = "Выбери корпорацию.";
+    }
+    /* ======== HELPER ======== */
+
+    async function publicFetchJson(url, options = {}) {
+      const res = await fetch(url, options);
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status}: ${txt}`);
+      }
+
+      return res.json();
     }
 
     /* ======== SELECT + RENDER ======== */
