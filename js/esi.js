@@ -1,9 +1,9 @@
 "use strict";
 
-// Функция для получения и обновления токенов (из auth.js)
+// Функция для получения и обновления токенов
 import { ensureValidAccessToken, refreshAccessToken } from './auth.js';
 
-// Функция для выполнения запросов с токеном
+// Экспортируем функцию esiFetchJson
 export async function esiFetchJson(url, options = {}) {
   const doReq = async (accessToken) => {
     const headers = new Headers(options.headers || {});
@@ -27,7 +27,7 @@ export async function esiFetchJson(url, options = {}) {
   return res.json();
 }
 
-// Загрузка мапы NPC корпораций и их фракций из файла (npc_corp_to_faction.json)
+// Загрузка мапы NPC корпораций и их фракций
 let npcCorpFactionMap = null;
 
 export async function loadNpcCorpFactionMap() {
@@ -41,7 +41,7 @@ export async function loadNpcCorpFactionMap() {
   return npcCorpFactionMap; // Возвращаем
 }
 
-// Получаем ID фракции для конкретной корпорации
+// Получаем ID фракции для корпорации
 export async function getNpcFactionIdForCorp(corpId) {
   const map = await loadNpcCorpFactionMap(); // Загружаем мапу
   return map[String(corpId)] ?? null; // Возвращаем ID фракции или null, если нет
