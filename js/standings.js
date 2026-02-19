@@ -3,6 +3,8 @@
 // Импортируем функцию для работы с EVE API
 import { esiFetchJson } from "./esi.js";
 
+let standingsRaw = [];  // Объявляем переменную standingsRaw
+
 // ===== skills =====
 function applyStandingSkill(base, level) {
   // effective = base + (10 - base) * 0.04 * level
@@ -40,7 +42,7 @@ export async function fetchStandings() {
     return;
   }
 
-  standingsRaw = data;
+  standingsRaw = data;  // Инициализируем standingsRaw с полученными данными
 
   const filtered = data.filter((x) => x.from_type === "faction" || x.from_type === "npc_corp");
   const ids = [...new Set(filtered.map((x) => x.from_id))];
