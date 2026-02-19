@@ -1,5 +1,8 @@
 "use strict";
 
+// ЗАДАЕМ clientId: Получаем его при регистрации приложения в EVE Developer Portal
+const clientId = "4c2f7825780f4d0cba80a75d1a8a0c69";  // Замените на свой действующий clientId
+
 // Данные для хранения токенов
 const LS = {
   access: "access_token",
@@ -7,9 +10,6 @@ const LS = {
   expiresAt: "access_expires_at",
   characterId: "character_id",
 };
-
-// Ваш clientId, который вы получили при регистрации в EVE Online Developer Portal
-const clientId = "ВАШ_CLIENT_ID_ЗДЕСЬ";  // Замените на свой действующий clientId
 
 // Функция для получения refresh токена
 function getRefreshToken() {
@@ -49,7 +49,7 @@ async function refreshAccessToken() {
     const body = new URLSearchParams();
     body.append("grant_type", "refresh_token");
     body.append("refresh_token", rt);
-    body.append("client_id", clientId);  // Убедитесь, что clientId используется здесь
+    body.append("client_id", clientId);  // Здесь используем clientId
 
     const res = await fetch("https://login.eveonline.com/v2/oauth/token", {
       method: "POST",
@@ -107,5 +107,5 @@ async function startLogin() {
   window.location.href = authUrl;
 }
 
-// Экспортируем все нужные функции
-export { startLogin, logout, ensureValidAccessToken };  // Без export для refreshAccessToken
+// Экспортируем только нужные функции
+export { startLogin, logout, ensureValidAccessToken };
