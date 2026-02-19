@@ -2,6 +2,7 @@
 "use strict";
 
 import { getNpcFactionIdForCorp } from "./esi.js"; // Импортируем функцию для получения фракции
+import { esiFetchJson } from "./esi.js";  // Импортируем функцию для работы с EVE API
 
 /* ===== skills ===== */
 
@@ -227,3 +228,4 @@ function createBar(label, baseStanding, kind) {
 
 window.addEventListener('load', fetchStandings);  // Эта строка вызывает fetchStandings при загрузке страницы
 
+export { fetchStandings };
