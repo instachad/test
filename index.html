@@ -325,7 +325,8 @@
     const redirectUri = "https://instachad.github.io/test/";
     const scopes = [
       "esi-wallet.read_character_wallet.v1",
-      "esi-characters.read_standings.v1"
+      "esi-characters.read_standings.v1",
+      "esi-skills.read_skills.v1"
     ].join(" ");
 
     let standingsRaw = [];
@@ -757,7 +758,52 @@
 
       fetchStandings();
     }
+    /* ======== FETCH SKILLS ======== */
 
+    async function fetchSocialSkillLevels() {
+      const charId = localStorage.getItem("character_id");
+      if (!charId) throw new Error("no charId");
+
+      const data = await esiFetchJson(`https://esi.evetech.net/latest/characters/${charId}/skills/`);
+
+      // data.skills: [{ skill_id, trained_skill_level, ... }]
+      const map = new Map(data.skills.map(s => [s.skill_id, s.trained_skill_level]));
+
+      return {
+        diplomacy: map.get(3357) || 0,
+        connections: map.get(3359) || 0,
+        criminalConnections: map.get(3361) || 0
+      };
+    }
+
+    // ===== Social skills state =====
+    let socialSkills = {
+      connections: 0,
+      diplomacy: 0
+    };
+
+    async function fetchSocialSkillLevels() {
+      const charId = localStorage.getItem("character_id");
+      if (!charId) return;
+
+      const data = await esiFetchJson(
+        `https://esi.evetech.net/latest/characters/${charId}/skills/`
+      );
+
+      const map = new Map((data.skills || []).map(s => [s.skill_id, s.trained_skill_level]));
+
+      const DIPLOMACY = 3357;
+      const CONNECTIONS = 3359;
+
+      socialSkills.connections = map.get(CONNECTIONS) || 0;
+      socialSkills.diplomacy = map.get(DIPLOMACY) || 0;
+    }
+
+    // ===== Standing skill formula =====
+
+    function applyStandingSkill(base, level) {
+      return base + (10 - base) * 0.04 * level;
+    }
 
     /* ======== FETCH STANDINGS ======== */
 
