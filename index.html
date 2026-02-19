@@ -870,12 +870,46 @@
       // 2) если ESI не дал faction_id (часто так у NPC корп), делаем простой хак по имени
       if (!factionId) {
         const n = (corp.name || "").toLowerCase();
+
+        // империи по “словам-указателям” (не только по названию фракции)
+        const isCaldari =
+          n.includes("caldari") ||
+          n.includes("state") ||
+          n.includes("kaalakiota") ||
+          n.includes("lai dai") ||
+          n.includes("ishukone") ||
+          n.includes("caldari navy");
+
+        const isGallente =
+          n.includes("gallente") ||
+          n.includes("federation") ||          // Federation Navy, Federal Navy Academy, etc
+          n.includes("federal") ||
+          n.includes("duvolle") ||
+          n.includes("rodens") ||
+          n.includes("aliastra");
+
+        const isAmarr =
+          n.includes("amarr") ||
+          n.includes("empire") ||
+          n.includes("imperial") ||            // Imperial Navy
+          n.includes("khanid") ||
+          n.includes("sarum") ||
+          n.includes("court chamberlain");
+
+        const isMinmatar =
+          n.includes("minmatar") ||
+          n.includes("republic") ||            // Republic Fleet
+          n.includes("tribe") ||
+          n.includes("thukker") ||
+          n.includes("brutor") ||
+          n.includes("krusual");
+
         // empire faction IDs (ESI)
         // Caldari State 500001, Minmatar Republic 500002, Amarr Empire 500003, Gallente Federation 500004
-        if (n.includes("caldari")) factionId = 500001;
-        else if (n.includes("minmatar")) factionId = 500002;
-        else if (n.includes("amarr")) factionId = 500003;
-        else if (n.includes("gallente")) factionId = 500004;
+        if (isCaldari) factionId = 500001;
+        else if (isMinmatar) factionId = 500002;
+        else if (isAmarr) factionId = 500003;
+        else if (isGallente) factionId = 500004;
       }
 
       // если нашли фракцию — рисуем её первой
