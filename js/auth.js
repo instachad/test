@@ -72,7 +72,7 @@ async function refreshAccessToken() {
 }
 
 // Функция для проверки валидности access токена
-export async function ensureValidAccessToken() {
+async function ensureValidAccessToken() {
   const token = localStorage.getItem(LS.access);
   const expAt = Number(localStorage.getItem(LS.expiresAt) || "0");
 
@@ -104,4 +104,5 @@ async function startLogin() {
   window.location.href = authUrl;
 }
 
-export { startLogin, logout, ensureValidAccessToken };  // Экспортируем все нужные функции
+// Экспортируем только нужные функции
+export { startLogin, logout, ensureValidAccessToken };  
