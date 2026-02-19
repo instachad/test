@@ -5,6 +5,16 @@ import { esiFetchJson } from "./esi.js";
 
 let standingsRaw = [];  // Объявляем переменную standingsRaw
 
+// Функция для отправки GET-запросов в формате JSON
+async function publicFetchJson(url, options = {}) {
+  const res = await fetch(url, options);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "");
+    throw new Error(`HTTP ${res.status}: ${txt}`);
+  }
+  return res.json();
+}
+
 // ===== skills =====
 function applyStandingSkill(base, level) {
   // effective = base + (10 - base) * 0.04 * level
