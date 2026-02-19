@@ -32,3 +32,37 @@ async function esiFetchJson(url, options = {}) {
 
   return res.json();
 }
+
+let npcCorpFactionMap = null;
+
+export async function loadNpcCorpFactionMap() {
+  if (npcCorpFactionMap) return npcCorpFactionMap;
+
+  const res = await fetch("./data/npc_corp_to_faction.json", { cache: "force-cache" });
+  if (!res.ok) throw new Error("Failed to load npc_corp_to_faction.json");
+  npcCorpFactionMap = await res.json();
+  return npcCorpFactionMap;
+}
+
+export async function getNpcFactionIdForCorp(corpId) {
+  const map = await loadNpcCorpFactionMap();
+  return map[String(corpId)] ?? null;
+}
+
+// Загружаем словарь с NPC корпорациями и их фракциями
+export async function loadNpcCorpFactionMap() {
+  if (npcCorpFactionMap) return npcCorpFactionMap; // Если уже загружено, не повторяем
+
+  const res = await fetch("./data/npc_corp_to_faction.json", { cache: "force-cache" });
+  if (!res.ok) throw new Error("Failed to load npc_corp_to_faction.json");
+
+  npcCorpFactionMap = await res.json(); // Сохраняем данные
+  return npcCorpFactionMap; // Возвращаем
+}
+
+// Получаем ID фракции для конкретной корпорации
+export async function getNpcFactionIdForCorp(corpId) {
+  const map = await loadNpcCorpFactionMap(); // Загружаем мапу
+  return map[String(corpId)] ?? null; // Возвращаем ID фракции или null, если нет
+}
+
