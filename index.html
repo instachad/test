@@ -332,6 +332,103 @@
     let standingsPretty = [];
     const nameCache = new Map();
 
+    // ===== AUTH MINIMAL (нужно чтобы работало refresh/esiFetchJson/logout) =====
+    const LS = {
+      access: "access_token",
+      refresh: "refresh_token",
+      expiresAt: "access_expires_at"
+    };
+
+    function getRefreshToken() {
+      return localStorage.getItem(LS.refresh);
+    }
+
+    function storeTokens(t) {
+      localStorage.setItem(LS.access, t.access_token);
+      if (t.refresh_token) localStorage.setItem(LS.refresh, t.refresh_token);
+      const expAt = Date.now() + (Number(t.expires_in || 0) * 1000) - 30000;
+      localStorage.setItem(LS.expiresAt, String(expAt));
+    }
+
+    function logout(reason = "") {
+      localStorage.removeItem(LS.access);
+      localStorage.removeItem(LS.refresh);
+      localStorage.removeItem(LS.expiresAt);
+      localStorage.removeItem("character_id");
+      setUiLoggedIn(false);
+      if (reason) console.warn("Logout:", reason);
+    }
+
+    let refreshInFlight = null;
+
+    async function refreshAccessToken() {
+      if (refreshInFlight) return refreshInFlight;
+
+      refreshInFlight = (async () => {
+        const rt = localStorage.getItem(LS.refresh);
+        if (!rt) throw new Error("Not logged in");
+
+        const body = new URLSearchParams();
+        body.append("grant_type", "refresh_token");
+        body.append("refresh_token", rt);
+        body.append("client_id", clientId);
+
+        const res = await fetch("https://login.eveonline.com/v2/oauth/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: body.toString()
+        });
+
+        if (!res.ok) {
+          const txt = await res.text().catch(() => "");
+          throw new Error(`Refresh failed: ${res.status} ${txt}`);
+        }
+
+        const json = await res.json();
+        storeTokens(json);
+        return json.access_token;
+      })();
+
+      try {
+        return await refreshInFlight;
+      } finally {
+        refreshInFlight = null;
+      }
+    }
+
+    async function ensureValidAccessToken() {
+      const token = localStorage.getItem(LS.access);
+      const expAt = Number(localStorage.getItem(LS.expiresAt) || "0");
+
+      if (!token || !expAt || Date.now() >= expAt) {
+        return await refreshAccessToken();
+      }
+      return token;
+    }
+
+    async function esiFetchJson(url, options = {}) {
+      const doReq = async (accessToken) => {
+        const headers = new Headers(options.headers || {});
+        headers.set("Authorization", `Bearer ${accessToken}`);
+        return fetch(url, { ...options, headers });
+      };
+
+      let token = await ensureValidAccessToken();
+      let res = await doReq(token);
+
+      if (res.status === 401) {
+        token = await refreshAccessToken();
+        res = await doReq(token);
+      }
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`ESI ${res.status}: ${txt}`);
+      }
+
+      return res.json();
+    }
+
     /* ======== VERSION (build SHA) ======== */
 
     fetch("https://api.github.com/repos/instachad/test/commits?per_page=1")
@@ -588,10 +685,19 @@
       const returnedState = params.get("state");
 
       if (!code) {
-        const hasToken = !!localStorage.getItem("access_token");
-        setUiLoggedIn(hasToken);
-        if (hasToken) verifyToken();
+        const hasRefresh = !!getRefreshToken();
+        setUiLoggedIn(hasRefresh);
+
+        if (hasRefresh) {
+          try {
+            await verifyToken();
+          } catch (e) {
+            console.warn(e);
+            logout("session invalid");
+          }
+        }
         return;
+
       }
 
       const expectedState = sessionStorage.getItem("eve_state");
@@ -602,12 +708,10 @@
 
       try {
         const token = await exchange(code);
-        localStorage.setItem("access_token", token.access_token);
-        localStorage.setItem("refresh_token", token.refresh_token);
-
+        storeTokens(token);
         history.replaceState({}, document.title, redirectUri);
         setUiLoggedIn(true);
-        verifyToken();
+        await verifyToken();
       } catch (e) {
         console.error(e);
         statusEl.textContent = "ошибка токена";
@@ -617,46 +721,66 @@
     /* ======== VERIFY TOKEN ======== */
 
     async function verifyToken() {
-      const token = localStorage.getItem("access_token");
-      if (!token) return;
+      let token;
+      try {
+        token = await ensureValidAccessToken();
+      } catch (e) {
+        logout("no valid token");
+        return;
+      }
 
-      const resp = await fetch("https://login.eveonline.com/oauth/verify", {
+      let resp = await fetch("https://login.eveonline.com/oauth/verify", {
         headers: { "Authorization": "Bearer " + token }
       });
 
-      if (!resp.ok) return;
+      if (!resp.ok) {
+        try {
+          token = await refreshAccessToken();
+          resp = await fetch("https://login.eveonline.com/oauth/verify", {
+            headers: { "Authorization": "Bearer " + token }
+          });
+          if (!resp.ok) {
+            logout("verify failed");
+            return;
+          }
+        } catch (e) {
+          logout("verify failed");
+          return;
+        }
+      }
 
       const data = await resp.json();
 
       document.getElementById("charName").textContent = data.CharacterName || "???";
       document.getElementById("charId").textContent = data.CharacterID || "???";
-
       localStorage.setItem("character_id", String(data.CharacterID || ""));
+
       fetchStandings();
     }
+
 
     /* ======== FETCH STANDINGS ======== */
 
     async function fetchStandings() {
-      const token = localStorage.getItem("access_token");
       const charId = localStorage.getItem("character_id");
       const bars = document.getElementById("barsContainer");
-
-      if (!token || !charId) return;
+      if (!charId) return;
 
       bars.innerHTML = "Гружу standings...";
 
-      const resp = await fetch(
-        `https://esi.evetech.net/latest/characters/${charId}/standings/`,
-        { headers: { "Authorization": "Bearer " + token } }
-      );
-
-      if (!resp.ok) {
-        bars.innerHTML = "Ошибка загрузки standings";
+      let data;
+      try {
+        data = await esiFetchJson(`https://esi.evetech.net/latest/characters/${charId}/standings/`);
+      } catch (e) {
+        console.error(e);
+        bars.innerHTML = "Ошибка загрузки standings (возможно, сессия умерла)";
+        // если refresh умер, esiFetchJson кинет ошибку на refresh, тогда вылогиниваем
+        if (String(e.message || e).includes("Refresh failed") || String(e.message || e).includes("Not logged in")) {
+          logout("standings auth failed");
+        }
         return;
       }
 
-      const data = await resp.json();
       standingsRaw = data;
 
       const filtered = data.filter(x =>
@@ -769,8 +893,8 @@
 
     document.addEventListener("click", e => {
       if (e.target.id === "logoutBtn") {
-        localStorage.clear();
-        setUiLoggedIn(false);
+        logout("manual");
+
       }
       if (e.target.id === "refreshStandingsBtn") {
         fetchStandings();
