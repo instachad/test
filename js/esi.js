@@ -1,7 +1,7 @@
 "use strict";
 
-// Импортируем функцию для проверки и обновления токенов
-import { ensureValidAccessToken, refreshAccessToken } from './auth.js';  // Убедись, что путь правильный
+// Импортируем функцию для проверки валидности access токена
+import { ensureValidAccessToken } from './auth.js';  // Импортируем только ensureValidAccessToken
 
 // Функция для выполнения запросов с токеном
 export async function esiFetchJson(url, options = {}) {
@@ -11,11 +11,12 @@ export async function esiFetchJson(url, options = {}) {
     return fetch(url, { ...options, headers });
   };
 
-  let token = await ensureValidAccessToken();
+  let token = await ensureValidAccessToken();  // Будем использовать ensureValidAccessToken напрямую
   let res = await doReq(token);
 
   if (res.status === 401) {
-    token = await refreshAccessToken();
+    // Если токен истек, обновим его
+    token = await ensureValidAccessToken();  // Повторно используем ensureValidAccessToken для обновления
     res = await doReq(token);
   }
 
