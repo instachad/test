@@ -104,4 +104,4 @@ async function startLogin() {
   window.location.href = authUrl;
 }
 
-export { startLogin, logout };  // Экспортируем нужные функции
+export { startLogin, logout, ensureValidAccessToken };  // Экспортируем все нужные функции
