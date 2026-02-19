@@ -890,23 +890,43 @@
       );
       if (!corp) return;
 
-      let faction = null;
-
+      // 1) Узнаём faction_id корпорации
+      let factionId = null;
       try {
-        const resp = await fetch(`https://esi.evetech.net/latest/corporations/${corp.id}/`);
-        if (resp.ok) {
-          const corpData = await resp.json();
-          if (corpData.faction_id) {
-            const fid = corpData.faction_id;
+        const corpInfo = await publicFetchJson(`https://esi.evetech.net/latest/corporations/${corp.id}/?_=${Date.now()}`);
+        factionId = corpInfo.faction_id || null;
+      } catch (e) {
+        console.warn("corp info fetch failed", e);
+      }
 
-            faction =
-              standingsPretty.find(x => x.type === "faction" && x.id === fid) ||
-              { id: fid, type: "faction", name: nameCache.get(fid) || "Faction", standing: 0 };
+      // 2) Если есть фракция — рисуем её бар ПЕРВЫМ
+      if (factionId) {
+        let factionStandingObj =
+          standingsPretty.find(x => x.type === "faction" && String(x.id) === String(factionId));
+
+        // если в standings нет записи про фракцию — считаем 0
+        const factionBase = factionStandingObj ? factionStandingObj.standing : 0;
+
+        // имя фракции: из кэша, иначе подгрузим через /universe/names/
+        let factionName = nameCache.get(factionId);
+        if (!factionName) {
+          try {
+            const names = await publicFetchJson("https://esi.evetech.net/latest/universe/names/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify([Number(factionId)])
+            });
+            factionName = (names && names[0] && names[0].name) ? names[0].name : `Faction ${factionId}`;
+            nameCache.set(Number(factionId), factionName);
+          } catch (e) {
+            factionName = `Faction ${factionId}`;
           }
         }
-      } catch { }
 
-      if (faction) bars.appendChild(createBar(faction.name, faction.standing, "faction"));
+        bars.appendChild(createBar(factionName, factionBase, "faction"));
+      }
+
+      // 3) Потом всегда рисуем корпу
       bars.appendChild(createBar(corp.name, corp.standing, "corp"));
     }
 
