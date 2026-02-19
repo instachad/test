@@ -1,15 +1,10 @@
 "use strict";
 
-async function publicFetchJson(url, options = {}) {
-  const res = await fetch(url, options);
-  if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`HTTP ${res.status}: ${txt}`);
-  }
-  return res.json();
-}
+// Функция для получения и обновления токенов (из auth.js)
+import { ensureValidAccessToken, refreshAccessToken } from './auth.js';
 
-async function esiFetchJson(url, options = {}) {
+// Функция для выполнения запросов с токеном
+export async function esiFetchJson(url, options = {}) {
   const doReq = async (accessToken) => {
     const headers = new Headers(options.headers || {});
     headers.set("Authorization", `Bearer ${accessToken}`);
@@ -32,9 +27,9 @@ async function esiFetchJson(url, options = {}) {
   return res.json();
 }
 
+// Загрузка мапы NPC корпораций и их фракций из файла (npc_corp_to_faction.json)
 let npcCorpFactionMap = null;
 
-// Загружаем словарь с NPC корпорациями и их фракциями
 export async function loadNpcCorpFactionMap() {
   if (npcCorpFactionMap) return npcCorpFactionMap; // Если уже загружено, не повторяем
 
