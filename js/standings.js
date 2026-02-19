@@ -1,7 +1,7 @@
 "use strict";
 
 // Импортируем функцию для работы с EVE API
-import { esiFetchJson } from "./esi.js";
+import { esiFetchJson } from "./esi.js"; 
 
 let standingsRaw = [];  // Объявляем переменную standingsRaw
 
