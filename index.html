@@ -770,14 +770,7 @@
 
       let data;
       try {
-        data = await esiFetchJson(
-          `https://esi.evetech.net/latest/characters/${charId}/standings/`,
-          {
-            headers: {
-              "Cache-Control": "no-cache"
-            }
-          }
-        );
+        data = await esiFetchJson(`https://esi.evetech.net/latest/characters/${charId}/standings/`,);
       } catch (e) {
         console.error(e);
         bars.innerHTML = "Ошибка загрузки standings (возможно, сессия умерла)";
