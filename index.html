@@ -430,6 +430,18 @@
       return res.json();
     }
 
+    async function publicFetchJson(url, options = {}) {
+      const res = await fetch(url, options);
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(`HTTP ${res.status}: ${txt}`);
+      }
+
+      return res.json();
+    }
+
+
     /* ======== VERSION (build SHA) ======== */
 
     fetch("https://api.github.com/repos/instachad/test/commits?per_page=1")
@@ -756,27 +768,18 @@
       document.getElementById("charId").textContent = data.CharacterID || "???";
       localStorage.setItem("character_id", String(data.CharacterID || ""));
 
+      try {
+        await fetchSocialSkillLevels();
+        console.log("Social skills:", socialSkills);
+      } catch (e) {
+        console.warn("skills fetch failed", e);
+      }
+
       fetchStandings();
-    }
-    /* ======== FETCH SKILLS ======== */
-
-    async function fetchSocialSkillLevels() {
-      const charId = localStorage.getItem("character_id");
-      if (!charId) throw new Error("no charId");
-
-      const data = await esiFetchJson(`https://esi.evetech.net/latest/characters/${charId}/skills/`);
-
-      // data.skills: [{ skill_id, trained_skill_level, ... }]
-      const map = new Map(data.skills.map(s => [s.skill_id, s.trained_skill_level]));
-
-      return {
-        diplomacy: map.get(3357) || 0,
-        connections: map.get(3359) || 0,
-        criminalConnections: map.get(3361) || 0
-      };
     }
 
     // ===== Social skills state =====
+
     let socialSkills = {
       connections: 0,
       diplomacy: 0
@@ -859,18 +862,6 @@
 
       populateCorpSelect();
       bars.innerHTML = "Выбери корпорацию.";
-    }
-    /* ======== HELPER ======== */
-
-    async function publicFetchJson(url, options = {}) {
-      const res = await fetch(url, options);
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => "");
-        throw new Error(`HTTP ${res.status}: ${txt}`);
-      }
-
-      return res.json();
     }
 
     /* ======== SELECT + RENDER ======== */
