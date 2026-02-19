@@ -1,4 +1,3 @@
-// js/esi.js
 "use strict";
 
 async function publicFetchJson(url, options = {}) {
@@ -35,20 +34,6 @@ async function esiFetchJson(url, options = {}) {
 
 let npcCorpFactionMap = null;
 
-export async function loadNpcCorpFactionMap() {
-  if (npcCorpFactionMap) return npcCorpFactionMap;
-
-  const res = await fetch("./data/npc_corp_to_faction.json", { cache: "force-cache" });
-  if (!res.ok) throw new Error("Failed to load npc_corp_to_faction.json");
-  npcCorpFactionMap = await res.json();
-  return npcCorpFactionMap;
-}
-
-export async function getNpcFactionIdForCorp(corpId) {
-  const map = await loadNpcCorpFactionMap();
-  return map[String(corpId)] ?? null;
-}
-
 // Загружаем словарь с NPC корпорациями и их фракциями
 export async function loadNpcCorpFactionMap() {
   if (npcCorpFactionMap) return npcCorpFactionMap; // Если уже загружено, не повторяем
@@ -57,6 +42,7 @@ export async function loadNpcCorpFactionMap() {
   if (!res.ok) throw new Error("Failed to load npc_corp_to_faction.json");
 
   npcCorpFactionMap = await res.json(); // Сохраняем данные
+  console.log(npcCorpFactionMap); // Логируем, что загрузилось
   return npcCorpFactionMap; // Возвращаем
 }
 
@@ -65,4 +51,3 @@ export async function getNpcFactionIdForCorp(corpId) {
   const map = await loadNpcCorpFactionMap(); // Загружаем мапу
   return map[String(corpId)] ?? null; // Возвращаем ID фракции или null, если нет
 }
-

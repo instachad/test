@@ -1,6 +1,8 @@
 // js/auth.js
 "use strict";
 
+import { fetchStandings } from "./standings.js";  // Импортируем функцию из standings.js
+
 /* ===== token storage ===== */
 const LS = {
   access: "access_token",
@@ -177,12 +179,6 @@ async function verifyToken() {
   document.getElementById("charName").textContent = data.CharacterName || "???";
   document.getElementById("charId").textContent = data.CharacterID || "???";
   localStorage.setItem(LS.characterId, String(data.CharacterID || ""));
-
-  try {
-    await fetchSocialSkillLevels();
-  } catch (e) {
-    console.warn("skills fetch failed", e);
-  }
 
   fetchStandings();
 }
