@@ -74,6 +74,226 @@
     #barsContainer {
       margin-top: 16px;
     }
+
+    /* ===== UI: layout ===== */
+    .grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .muted {
+      opacity: .75;
+    }
+
+    .small {
+      font-size: 12px;
+      opacity: .8;
+    }
+
+    .kpi {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .kpi .val {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: .2px;
+    }
+
+    .kpi .lbl {
+      font-size: 12px;
+      opacity: .8;
+    }
+
+    /* ===== UI: sections ===== */
+    .section {
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 2px;
+    }
+
+    .section h3 {
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      letter-spacing: .6px;
+      text-transform: uppercase;
+      opacity: .9;
+    }
+
+    /* ===== UI: standing bars ===== */
+    .barBlock {
+      margin-top: 10px;
+    }
+
+    .barTitle {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .barTitle .name {
+      opacity: .95;
+    }
+
+    .barTitle .num {
+      opacity: .75;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .bar {
+      position: relative;
+      height: 18px;
+      background: #151821;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .bar .ticks {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(to right, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 100%) 0 0 / 10% 100%;
+      opacity: .35;
+    }
+
+    .bar .zero {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 1px;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.28);
+    }
+
+    .bar .fill {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      opacity: .85;
+    }
+
+    .bar .marker {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+      opacity: .95;
+    }
+
+    /* faction colors */
+    .bar.faction .fill.pos {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), #5b7ea6);
+    }
+
+    .bar.faction .fill.neg {
+      background: linear-gradient(90deg, #a66a75, rgba(255, 255, 255, 0.08));
+    }
+
+    .bar.faction .marker.pos {
+      background: #5b7ea6;
+    }
+
+    .bar.faction .marker.neg {
+      background: #a66a75;
+    }
+
+    .bar.faction .marker.zero {
+      background: #888;
+    }
+
+    /* corp colors */
+    .bar.corp .fill.pos {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.08), #6e9c78);
+    }
+
+    .bar.corp .fill.neg {
+      background: linear-gradient(90deg, #b37a4a, rgba(255, 255, 255, 0.08));
+    }
+
+    .bar.corp .marker.pos {
+      background: #6e9c78;
+    }
+
+    .bar.corp .marker.neg {
+      background: #b37a4a;
+    }
+
+    .bar.corp .marker.zero {
+      background: #888;
+    }
+
+    /* ===== UI: progress (storyline / epic) ===== */
+    .progressWrap {
+      margin-top: 8px;
+    }
+
+    .progressTop {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 12px;
+      opacity: .85;
+      margin-bottom: 6px;
+    }
+
+    .progress {
+      height: 10px;
+      background: #151821;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress>div {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.10), rgba(91, 126, 166, 0.85));
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 2px;
+      font-size: 12px;
+      opacity: .9;
+    }
+
+    .badge.ok {
+      border-color: rgba(110, 156, 120, 0.45);
+    }
+
+    .badge.warn {
+      border-color: rgba(179, 122, 74, 0.55);
+    }
+
+    .badge.bad {
+      border-color: rgba(166, 106, 117, 0.55);
+    }
+
+    input[type="number"],
+    input[type="datetime-local"] {
+      background: #1e2330;
+      color: #d6d9df;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 2px;
+      padding: 7px 10px;
+    }
   </style>
 
 </head>
@@ -136,29 +356,151 @@
     appEl.style.display = "none";
 
     appEl.innerHTML = `
-    <div class="panel">
-      <div style="display:flex; justify-content:space-between;">
-        <div><b>Рабочая зона</b></div>
-        <button id="logoutBtn">Выход</button>
+<div class="panel">
+  <div class="row">
+    <div><b>Рабочая зона</b></div>
+    <button id="logoutBtn">Выход</button>
+  </div>
+
+  <div style="margin-top:10px;">
+    <div><b>Персонаж:</b> <span id="charName">Test Capsuleer</span></div>
+    <div class="small">Character ID: <span id="charId">123456789</span></div>
+  </div>
+
+  <div class="grid" style="margin-top:12px;">
+
+    <!-- ===== Standings ===== -->
+    <div class="section">
+      <h3>Standings</h3>
+
+      <div class="row" style="align-items:flex-end;">
+        <div style="flex:1;">
+          <div class="small">NPC корпорация</div>
+          <select id="corpSelect" style="min-width:320px; width:100%; margin-top:6px;">
+            <option value="1000035">Caldari Navy (пример)</option>
+            <option value="1000002">Kaalakiota Corporation (пример)</option>
+          </select>
+        </div>
+
+        <div style="display:flex; gap:8px;">
+          <button id="refreshStandingsBtn">Обновить</button>
+        </div>
       </div>
 
-      <div style="margin-top:10px;">
-        <div><b>Персонаж:</b> <span id="charName">—</span></div>
-        <div style="opacity:.6;">Character ID: <span id="charId">—</span></div>
+      <div id="barsContainer" style="margin-top:14px;">
+
+        <!-- FAKE: faction bar -->
+        <div class="barBlock">
+          <div class="barTitle">
+            <div class="name">Caldari State</div>
+            <div class="num">+6.42</div>
+          </div>
+
+          <div class="bar faction">
+            <div class="ticks"></div>
+            <div class="zero"></div>
+
+            <!-- fill from center to value -->
+            <div class="fill pos" style="left:50%; width:32.1%;"></div>
+            <!-- marker at value -->
+            <div class="marker pos" style="left:82.1%;"></div>
+          </div>
+        </div>
+
+        <!-- FAKE: corp bar -->
+        <div class="barBlock">
+          <div class="barTitle">
+            <div class="name">Caldari Navy</div>
+            <div class="num">-2.10</div>
+          </div>
+
+          <div class="bar corp">
+            <div class="ticks"></div>
+            <div class="zero"></div>
+
+            <div class="fill neg" style="left:39.5%; width:10.5%;"></div>
+            <div class="marker neg" style="left:39.5%;"></div>
+          </div>
+        </div>
+
+        <div class="small muted" style="margin-top:10px;">
+          Сейчас это пример. Потом эти цифры и полосы будут строиться из ESI.
+        </div>
+
       </div>
-
-      <div style="margin-top:10px; opacity:.7;">Standings:</div>
-
-      <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-        <select id="corpSelect" style="padding:6px 10px; min-width:320px;">
-          <option value="">Выберите NPC-корпорацию</option>
-        </select>
-        <button id="refreshStandingsBtn" style="padding:6px 10px; cursor:pointer;">Обновить</button>
-      </div>
-
-      <div id="barsContainer" style="margin-top:16px;"></div>
     </div>
-    `;
+
+    <!-- ===== Storyline tracker ===== -->
+    <div class="section">
+      <h3>Storyline</h3>
+
+      <div class="row">
+        <div class="kpi">
+          <div class="val" id="storyDone">11</div>
+          <div class="lbl">из <span id="storyNeed">16</span> миссий</div>
+        </div>
+        <span class="badge warn" id="storyBadge">осталось 5</span>
+      </div>
+
+      <div class="progressWrap">
+        <div class="progressTop">
+          <div class="muted">Прогресс до следующей storyline</div>
+          <div class="muted"><span id="storyPct">68</span>%</div>
+        </div>
+        <div class="progress"><div style="width:68%;"></div></div>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div style="flex:1;">
+          <div class="small">Счётчик миссий (ручной ввод, пока не прикрутили wallet-логику)</div>
+          <div class="row" style="justify-content:flex-start; margin-top:6px;">
+            <button id="storyPlus">+1 миссия</button>
+            <button id="storyReset">сбросить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Epic arc tracker ===== -->
+    <div class="section">
+      <h3>Epic arc</h3>
+
+      <div class="row">
+        <div>
+          <div class="small muted">Последнее завершение</div>
+          <div style="font-weight:600;" id="epicLast">2026-01-10</div>
+        </div>
+        <div>
+          <div class="small muted">Следующий доступ</div>
+          <div style="font-weight:700;" id="epicNext">2026-04-10</div>
+        </div>
+        <span class="badge ok" id="epicBadge">не скоро</span>
+      </div>
+
+      <div class="progressWrap">
+        <div class="progressTop">
+          <div class="muted">Кулдаун</div>
+          <div class="muted"><span id="epicLeft">50</span> дней осталось</div>
+        </div>
+        <div class="progress"><div style="width:45%; background:linear-gradient(90deg, rgba(255,255,255,0.10), rgba(110,156,120,0.85));"></div></div>
+      </div>
+
+      <div class="row" style="margin-top:10px; align-items:flex-end;">
+        <div style="flex:1;">
+          <div class="small">Установить дату последнего завершения (пока вручную)</div>
+          <input id="epicLastInput" type="date" style="margin-top:6px; width:100%;">
+        </div>
+        <button id="epicApply">применить</button>
+      </div>
+
+      <div class="small muted" style="margin-top:8px;">
+        Потом сделаем список эпик-арок и их разные кулдауны, если надо.
+      </div>
+    </div>
+
+  </div>
+</div>
+`;
 
     document.body.appendChild(appEl);
 
@@ -432,6 +774,57 @@
       }
       if (e.target.id === "refreshStandingsBtn") {
         fetchStandings();
+      }
+      if (e.target.id === "storyPlus") {
+        const doneEl = document.getElementById("storyDone");
+        const needEl = document.getElementById("storyNeed");
+        let done = parseInt(doneEl.textContent, 10) || 0;
+        const need = parseInt(needEl.textContent, 10) || 16;
+        done = Math.min(need, done + 1);
+        doneEl.textContent = String(done);
+
+        const left = Math.max(0, need - done);
+        document.getElementById("storyBadge").textContent = left === 0 ? "готово" : `осталось ${left}`;
+        document.getElementById("storyBadge").className = "badge " + (left === 0 ? "ok" : left <= 3 ? "warn" : "bad");
+        const pct = Math.round((done / need) * 100);
+        document.getElementById("storyPct").textContent = String(pct);
+        document.querySelector(".section .progress > div").style.width = pct + "%";
+      }
+
+      if (e.target.id === "storyReset") {
+        document.getElementById("storyDone").textContent = "0";
+        document.getElementById("storyPct").textContent = "0";
+        document.getElementById("storyBadge").textContent = "осталось 16";
+        document.getElementById("storyBadge").className = "badge bad";
+        document.querySelector(".section .progress > div").style.width = "0%";
+      }
+
+      if (e.target.id === "epicApply") {
+        const inp = document.getElementById("epicLastInput");
+        if (!inp || !inp.value) return;
+        const last = new Date(inp.value + "T00:00:00");
+        const next = new Date(last);
+        next.setDate(next.getDate() + 90); // пример: 90 дней кулдаун, потом настроим как надо
+
+        const fmt = d => d.toISOString().slice(0, 10);
+        document.getElementById("epicLast").textContent = fmt(last);
+        document.getElementById("epicNext").textContent = fmt(next);
+
+        const now = new Date();
+        const leftDays = Math.ceil((next - now) / (1000 * 60 * 60 * 24));
+        document.getElementById("epicLeft").textContent = String(Math.max(0, leftDays));
+
+        const badge = document.getElementById("epicBadge");
+        if (leftDays <= 0) {
+          badge.textContent = "доступно";
+          badge.className = "badge ok";
+        } else if (leftDays <= 7) {
+          badge.textContent = "скоро";
+          badge.className = "badge warn";
+        } else {
+          badge.textContent = "не скоро";
+          badge.className = "badge bad";
+        }
       }
     });
 
